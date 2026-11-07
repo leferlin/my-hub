@@ -61,6 +61,33 @@ async function loadEntry(env: Secrets, kind: Kind, slug: string) {
 }
 function createServer(env: Secrets) {
   const server = new McpServer({ name: 'personal-hub-admin', version: '0.3.0' });
+  server.registerTool('get_entry', {
+    description: 'Lê o conteúdo Markdown e o SHA de uma skill, note ou mode do GitHub privado.',
+    inputSchema: z.object({ kind: kindSchema, slug: slugSchema })
+  }, async ({ kind, slug }) => {
+    try {
+      const data = await github(env, 'GET', gitPath(kind, slug));
+      if (data.type !== 'file' || data.encoding !== 'base64' || typeof data.content !== 'string') {
+        throw new Error('Resposta de arquivo inválida');
+      }
+      const binary = atob(data.content.replace(/\\s/g, ''));
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      return result({ kind, slug, path: gitPath(kind, slug), sha: data.sha, content: new TextDecoder().decode(bytes) });
+    } catch (e) { return failed(e); }
+  });
+  server.registerTool('list_entries', {
+    description: 'Lista nomes de skills, notes ou modes no repositório privado.',
+    inputSchema: z.object({ kind: kindSchema })
+  }, async ({ kind }) => {
+    try {
+      const folder = kind === 'skill' ? 'skills' : kind === 'note' ? 'notes' : 'modes';
+      const data = await github(env, 'GET', folder);
+      if (!Array.isArray(data)) throw new Error('Pasta indisponível');
+      return result(data
+        .filter((entry: any) => kind === 'skill' ? entry.type === 'dir' : entry.type === 'file' && entry.name.endsWith('.md'))
+        .map((entry: any) => ({ name: entry.name, path: entry.path })));
+    } catch (e) { return failed(e); }
+  });
   server.registerTool('get_entry_metadata', {
     description: 'Obtém o SHA atual de uma skill, note ou mode antes de atualizar ou excluir.',
     inputSchema: z.object({ kind: kindSchema, slug: slugSchema })
