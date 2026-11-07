@@ -1,6 +1,7 @@
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import catalog from './catalog.json';
+import { serveAdminMcp, type Secrets } from './admin';
 
 function createServer() {
   const server = new McpServer({ name: 'personal-hub', version: '0.2.0' });
@@ -39,21 +40,13 @@ function createServer() {
 const mcpHandler = createMcpHandler(createServer);
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
+  async fetch(request: Request, env: Secrets, ctx: ExecutionContext): Promise<Response> {
     const pathname = new URL(request.url).pathname;
     if (pathname === '/health') return Response.json({ ok: true, skills: catalog.length, version: '0.2.0' });
+    if (pathname === '/mcp-admin') return serveAdminMcp(request, env);
     if (pathname !== '/mcp') return new Response('Not Found', { status: 404 });
     const response = await mcpHandler.fetch(request);
-    // Diagnóstico temporário: logs limitados aos metadados das operações de descoberta.
-    const method = request.headers.get('mcp-method');
-    if (request.method === 'POST' && (method === 'server/discover' || method === 'tools/list')) {
-      const body = await response.clone().text();
-      console.log(method === 'server/discover' ? 'MCP_DISCOVER_RESPONSE' : 'MCP_TOOLS_LIST_RESPONSE', JSON.stringify({
-        status: response.status,
-        contentType: response.headers.get('content-type'),
-        body: body.slice(0, 4000)
-      }));
-    }
+
     return response;
   }
 } satisfies ExportedHandler;
