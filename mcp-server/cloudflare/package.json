@@ -1,6 +1,6 @@
 {
   "name": "personal-hub-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +10,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "agents": "^0.5.0",
+    "@modelcontextprotocol/server": "2.3.1",
     "zod": "^3.25.0"
   },
   "devDependencies": {
