@@ -70,7 +70,7 @@ function createServer(env: Secrets) {
       if (data.type !== 'file' || data.encoding !== 'base64' || typeof data.content !== 'string') {
         throw new Error('Resposta de arquivo inválida');
       }
-      const binary = atob(data.content.replace(/\\s/g, ''));
+      const binary = atob(data.content.replace(/\s/g, ''));
       const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
       return result({ kind, slug, path: gitPath(kind, slug), sha: data.sha, content: new TextDecoder().decode(bytes) });
     } catch (e) { return failed(e); }
