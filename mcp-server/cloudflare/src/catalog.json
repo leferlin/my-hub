@@ -1,0 +1,4 @@
+[
+  {"name":"hello-world","description":"Skill fictícia para validar a integração entre clientes de IA e o servidor MCP.","content":"---\nname: hello-world\ndescription: Skill fictícia para validar a integração entre clientes de IA e o servidor MCP.\n---\n\n# Hello world\n\nEsta skill existe somente para validar a descoberta, listagem e leitura pelo MCP.\n"},
+  {"name":"revisar-texto","description":"Rotina genérica para revisar clareza, ortografia e concisão de textos.","content":"---\nname: revisar-texto\ndescription: Rotina genérica para revisar clareza, ortografia e concisão de textos.\n---\n\n# Revisar texto\n\nPreserve os fatos e melhore a clareza.\n"}
+]
