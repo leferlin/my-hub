@@ -1,18 +1,19 @@
-# MCP de demonstração — Cloudflare Workers
+# Personal Hub MCP de demonstração — Cloudflare Workers
 
-MCP remoto usando HTTPS/Streamable HTTP, com três ferramentas: `list_skills`, `search_skills`, `get_skill`.
+Servidor remoto MCP 2026-07-28 (SDK v2) com três ferramentas de consulta: `list_skills`, `search_skills`, `get_skill`.
 
-## Execução local
-Requer Node.js 20+ e npm.
+## Execução e validação
+Node.js 20+ e npm:
 
 ```bash
 cd mcp-server/cloudflare
 npm install
+npm run build:catalog
 npm run check
 npm run dev
 ```
 
-Verifique `http://localhost:8787/health`. Endpoint MCP: `http://localhost:8787/mcp`.
+Verifique `http://localhost:8787/health`. Acesse o protocolo MCP via `POST http://localhost:8787/mcp` com um cliente MCP (não basta abrir o endpoint no navegador).
 
 ## Deploy
 ```bash
@@ -20,8 +21,11 @@ npx wrangler login
 npm run deploy
 ```
 
-Depois use a URL publicada com sufixo `/mcp`. O comando `build:catalog` lê os arquivos em `../../skills/` e gera o JSON usado pelo Worker.
+No Cloudflare Git build, use Root directory `mcp-server/cloudflare`, Build command `npm run build:catalog` e Deploy command `npx wrangler deploy`.
 
-**Segurança:** endpoint MCP sem autenticação no MVP, logo **qualquer pessoa que alcance a URL consegue ler as skills embutidas**. Utilize apenas material fictício, nunca seus planos pessoais, dados privados ou credenciais.
+O catálogo é incorporado ao build. O servidor **não consulta o repositório GitHub privado em tempo real**. Um novo deploy é necessário para atualizar as skills.
 
-**Próxima fase:** OAuth, permissões de leitura do repositório privado e carregamento dinâmico. Não assuma que um token do GitHub no Worker fornece autenticação aos clientes MCP.
+## Segurança
+Este protótipo não tem autenticação. Qualquer pessoa que alcançar a URL poderá ler as skills de demonstração. **Não adicione planos, listas, tarefas, dados pessoais, credenciais ou quaisquer conteúdos privados ao catálogo** antes da implementação e validação de OAuth e das regras de acesso.
+
+A versão 0.2 migrou do SDK MCP legado para o SDK v2 com suporte ao método `server/discover`, usado por clientes MCP 2026-07-28.
