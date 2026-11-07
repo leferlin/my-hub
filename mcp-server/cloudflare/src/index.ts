@@ -43,6 +43,16 @@ export default {
     const pathname = new URL(request.url).pathname;
     if (pathname === '/health') return Response.json({ ok: true, skills: catalog.length, version: '0.2.0' });
     if (pathname !== '/mcp') return new Response('Not Found', { status: 404 });
-    return mcpHandler.fetch(request);
+    const response = await mcpHandler.fetch(request);
+    // Diagnóstico temporário: registrar somente a descoberta (sem dados privados).
+    if (request.method === 'POST' && request.headers.get('mcp-method') === 'server/discover') {
+      const responseBody = await response.clone().text();
+      console.log('MCP_DISCOVER_RESPONSE', JSON.stringify({
+        status: response.status,
+        contentType: response.headers.get('content-type'),
+        body: responseBody.slice(0, 2500)
+      }));
+    }
+    return response;
   }
 } satisfies ExportedHandler;
