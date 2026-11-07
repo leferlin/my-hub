@@ -43,6 +43,6 @@ export default {
     const pathname = new URL(request.url).pathname;
     if (pathname === '/health') return Response.json({ ok: true, skills: catalog.length, version: '0.2.0' });
     if (pathname !== '/mcp') return new Response('Not Found', { status: 404 });
-    return mcpHandler(request, env, ctx);
+    return mcpHandler.fetch(request);
   }
 } satisfies ExportedHandler;
