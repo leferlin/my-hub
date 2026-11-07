@@ -1,22 +1,32 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { createMcpHandler } from 'agents/mcp';
+import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 import catalog from './catalog.json';
 
-function makeServer() {
-  const server = new McpServer({ name: 'personal-hub', version: '0.1.0' });
+function createServer() {
+  const server = new McpServer({ name: 'personal-hub', version: '0.2.0' });
 
-  server.tool('list_skills', 'Lista as skills disponíveis.', {}, async () => ({
+  server.registerTool('list_skills', {
+    description: 'Lista as skills disponíveis.',
+    inputSchema: z.object({})
+  }, async () => ({
     content: [{ type: 'text', text: JSON.stringify(catalog.map(({ name, description }) => ({ name, description })), null, 2) }]
   }));
 
-  server.tool('search_skills', 'Busca skills por texto.', { query: z.string().min(1) }, async ({ query }) => {
+  server.registerTool('search_skills', {
+    description: 'Busca skills por texto.',
+    inputSchema: z.object({ query: z.string().min(1) })
+  }, async ({ query }) => {
     const q = query.toLowerCase();
     const matches = catalog.filter(s => `${s.name} ${s.description} ${s.content}`.toLowerCase().includes(q));
-    return { content: [{ type: 'text', text: JSON.stringify(matches.map(({ name, description }) => ({ name, description })), null, 2) }] };
+    return {
+      content: [{ type: 'text', text: JSON.stringify(matches.map(({ name, description }) => ({ name, description })), null, 2) }]
+    };
   });
 
-  server.tool('get_skill', 'Obtém as instruções completas de uma skill.', { name: z.string().min(1) }, async ({ name }) => {
+  server.registerTool('get_skill', {
+    description: 'Obtém as instruções completas de uma skill.',
+    inputSchema: z.object({ name: z.string().min(1) })
+  }, async ({ name }) => {
     const skill = catalog.find(s => s.name === name);
     return skill
       ? { content: [{ type: 'text', text: skill.content }] }
@@ -26,13 +36,13 @@ function makeServer() {
   return server;
 }
 
-const handler = createMcpHandler(makeServer);
+const mcpHandler = createMcpHandler(createServer);
 
 export default {
-  async fetch(request: Request): Promise<Response> {
-    const path = new URL(request.url).pathname;
-    if (path === '/health') return Response.json({ ok: true, skills: catalog.length });
-    if (path !== '/mcp') return new Response('Not Found', { status: 404 });
-    return handler(request);
+  async fetch(request: Request, env: unknown, ctx: ExecutionContext): Promise<Response> {
+    const pathname = new URL(request.url).pathname;
+    if (pathname === '/health') return Response.json({ ok: true, skills: catalog.length, version: '0.2.0' });
+    if (pathname !== '/mcp') return new Response('Not Found', { status: 404 });
+    return mcpHandler(request, env, ctx);
   }
-};
+} satisfies ExportedHandler;
