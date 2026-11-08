@@ -82,13 +82,13 @@ export function createGitHubMcpServer(env: Secrets, scopes: readonly string[] = 
   if (!canRead) throw new Error('Missing hub:read scope');
   const server = new McpServer(
     {
-      name: 'personal-hub-secure',
+      name: 'my-hub-secure',
       version: '0.4.0',
-      description: 'Private remote GitHub-backed knowledge, reusable agent skills and behavioral modes.'
+      description: 'My Hub: private remote GitHub-backed knowledge, reusable agent skills and behavioral modes.'
     },
     {
       instructions:
-        'Personal Hub is a REMOTE, GitHub-backed source of reusable skills, modes, notes, plans, tasks, procedures, knowledge, workflows, and scripts. ' +
+        'My Hub is a REMOTE, GitHub-backed source of reusable skills, modes, notes, plans, tasks, procedures, knowledge, workflows, and scripts. ' +
         'Use the Hub MCP tools, not the local workspace, to discover/read/write Hub entries. ' +
         'Each skill and mode MUST be self-contained: do not split required instructions into shared files such as modes/_rules.md. ' +
         'List the relevant category before guessing slugs; read a skill/mode before applying it. ' +
@@ -98,7 +98,7 @@ export function createGitHubMcpServer(env: Secrets, scopes: readonly string[] = 
     }
   );
   server.registerTool('get_hub_guide', {
-    description: 'Read the complete Personal Hub agent onboarding guide (AGENTS.md): what this remote server is for, self-contained mode/skill rules, category layout, and proper workflows. Read when first using the Hub or before authoring entries.',
+    description: 'Read the complete My Hub agent onboarding guide (AGENTS.md): what this remote server is for, self-contained mode/skill rules, category layout, and proper workflows. Read when first using the Hub or before authoring entries.',
     inputSchema: z.object({})
   }, async () => {
     try {
