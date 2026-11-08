@@ -203,33 +203,7 @@ export function createGitHubMcpServer(env: Secrets, scopes: readonly string[] = 
       } catch (error) { return failed(error); }
     });
 
-    if (canWrite) {
-      server.registerTool(`create_${singular}_file`, {
-        description: `Create a new ${singular} Markdown file in Personal Hub's private GitHub repository. Does not overwrite existing files.`,
-        inputSchema: z.object({ slug: slugSchema, content: bodySchema })
-      }, async ({ slug, content }) => {
-        try {
-          const path = gitPath(kind, slug);
-          const created = await github(env, 'PUT', path, {
-            message: `Create ${singular}: ${slug}`, content: base64(content), branch: 'main'
-          });
-          return result({ action: 'created', kind, path, commit: created.commit?.sha });
-        } catch (error) { return failed(error); }
-      });
-      server.registerTool(`update_${singular}_file`, {
-        description: `Update an existing ${singular} Markdown file in GitHub. First fetch it to obtain the latest SHA, then supply expected_sha to prevent conflicts.`,
-        inputSchema: z.object({ slug: slugSchema, content: bodySchema, expected_sha: shaSchema })
-      }, async ({ slug, content, expected_sha }) => {
-        try {
-          const path = gitPath(kind, slug);
-          const updated = await github(env, 'PUT', path, {
-            message: `Update ${singular}: ${slug}`, content: base64(content),
-            sha: expected_sha, branch: 'main'
-          });
-          return result({ action: 'updated', kind, path, commit: updated.commit?.sha });
-        } catch (error) { return failed(error); }
-      });
-    }
+
   }
   return server;
 }
