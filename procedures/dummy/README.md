@@ -1,7 +1,7 @@
-# Procedimento dummy
+# Dummy Procedure
 
 status: ok
 
-## Passos
-1. Receber uma solicitação de teste.
-2. Retornar `PROCEDURE_OK`.
+## Steps
+1. Receive a test request.
+2. Return `PROCEDURE_OK`.
