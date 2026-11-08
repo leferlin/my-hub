@@ -106,7 +106,7 @@ export function createGitHubMcpServer(env: Secrets, scopes: readonly string[] = 
       if (data.type !== 'file' || data.encoding !== 'base64' || typeof data.content !== 'string') {
         throw new Error('Invalid guide file response');
       }
-      const binary = atob(data.content.replace(/\\s/g, ''));
+      const binary = atob(data.content.replace(/\s/g, ''));
       const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
       return { content: [{ type: 'text' as const, text: new TextDecoder().decode(bytes) }] };
     } catch (error) { return failed(error); }
