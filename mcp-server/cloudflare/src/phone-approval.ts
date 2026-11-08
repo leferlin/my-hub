@@ -3,7 +3,7 @@
  *
  * The corporate laptop keeps its original OAuth browser transaction and binding
  * cookie. The phone authenticates with GitHub independently, then marks a
- * high-entropy pairing code approved. The laptop must explicitly finish the
+ * short pairing identifier approved. The laptop must explicitly finish the
  * same consent transaction. No OAuth token or GitHub credential crosses devices.
  */
 import {
@@ -16,6 +16,10 @@ import {
 const TTL_SECONDS = 600;
 const PAIR_PREFIX = 'phone-pair:';
 const STATE_PREFIX = 'phone-state:';
+const LOOKUP_LIMIT = 5; // best-effort per-IP throttling; KV is not atomic
+const LOOKUP_WINDOW_SECONDS = 600;
+const LOOKUP_PREFIX = 'phone-lookup:';
+const ALPHABET = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // 32 chars, avoids 0/O and 1/I
 const PHONE_COOKIE = '__Host-personal-hub-phone-state';
 const noStore = {
   'Cache-Control': 'no-store',
@@ -49,11 +53,21 @@ function codeNormalize(raw: string) {
   return raw.replace(/[-\s]/g, '').toUpperCase();
 }
 function createCode() {
-  const bytes = crypto.getRandomValues(new Uint8Array(10));
-  return Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  const bytes = crypto.getRandomValues(new Uint8Array(4));
+  return Array.from(bytes, byte => ALPHABET[byte & 31]).join('');
 }
 function prettyCode(code: string) {
-  return code.match(/.{1,5}/g)?.join('-') || code;
+  return code;
+}
+async function throttleLookup(request: Request, env: OAuthEnv): Promise<boolean> {
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(ip));
+  const identifier = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
+  const key = LOOKUP_PREFIX + identifier;
+  const count = Number((await env.OAUTH_KV.get(key)) || '0');
+  if (count >= LOOKUP_LIMIT) return false;
+  await env.OAUTH_KV.put(key, String(count + 1), { expirationTtl: LOOKUP_WINDOW_SECONDS });
+  return true;
 }
 function strongNonce() {
   const bytes = crypto.getRandomValues(new Uint8Array(24));
@@ -69,7 +83,16 @@ export async function createPair(env: OAuthEnv, details: {
   redirectHost: string;
   scopes: string[];
 }) {
-  const code = createCode();
+  // Avoid overwriting an existing live pairing (KV lookup is not atomic).
+  let code = '';
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const candidate = createCode();
+    if (!(await env.OAUTH_KV.get(PAIR_PREFIX + candidate))) {
+      code = candidate;
+      break;
+    }
+  }
+  if (!code) throw new Error('Could not allocate a free pairing identifier');
   await env.OAUTH_KV.put(PAIR_PREFIX + code, JSON.stringify({
     ...details, status: 'pending'
   } satisfies Pair), { expirationTtl: TTL_SECONDS });
@@ -119,9 +142,10 @@ export async function finishPair(
 
 export async function phoneLanding(request: Request, env: OAuthEnv) {
   const code = codeNormalize(new URL(request.url).searchParams.get('code') || '');
-  const entry = '<form method="GET" action="/phone"><label for="code">Pairing code shown on your computer</label><p><input id="code" name="code" required autocomplete="off" spellcheck="false" maxlength="28" value="' +
+  const entry = '<form method="GET" action="/phone"><label for="code">Pairing code shown on your computer</label><p><input id="code" name="code" required autocomplete="off" spellcheck="false" maxlength="4" value="' +
     htmlEscape(code) + '" style="font:1.15rem monospace;width:95%;padding:.5rem"></p><button type="submit">Find request</button></form>';
-  if (!/^[A-F0-9]{20}$/.test(code)) return page('Approve Personal Hub from phone', '<p>Enter the code displayed on your laptop.</p>' + entry);
+  if (!/^[2-9A-HJ-NP-Z]{4}$/.test(code)) return page('Approve Personal Hub from phone', '<p>Enter the four-character code displayed on your laptop.</p>' + entry);
+  if (!(await throttleLookup(request, env))) return reject('Too many code lookups. Try again later.', 429);
   const pair = await env.OAUTH_KV.get<Pair>(PAIR_PREFIX + code, 'json');
   if (!pair) return reject('Pairing code not found or expired.', 404);
   if (pair.status === 'approved') return page('Phone approval complete', '<p>Approved. Return to the original browser page on your computer and select <strong>finish on this computer</strong>.</p>');
@@ -138,7 +162,8 @@ export async function startPhoneLogin(request: Request, env: OAuthEnv) {
   if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405 });
   const form = await request.formData();
   const code = codeNormalize(String(form.get('code') || ''));
-  if (!/^[A-F0-9]{20}$/.test(code)) return reject('Invalid pairing code.');
+  if (!/^[2-9A-HJ-NP-Z]{4}$/.test(code)) return reject('Invalid pairing code.');
+  if (!(await throttleLookup(request, env))) return reject('Too many code lookups. Try again later.', 429);
   const pair = await env.OAUTH_KV.get<Pair>(PAIR_PREFIX + code, 'json');
   if (!pair || pair.status !== 'pending') return reject('This pairing request is no longer pending.', 410);
   if (!env.GITHUB_CLIENT_ID || !env.GITHUB_CLIENT_SECRET || !env.ALLOWED_GITHUB_USER_ID) {
