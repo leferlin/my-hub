@@ -1,9 +1,9 @@
 # Modes
 
-Instruções de comportamento para agentes de IA. Cada modo é um arquivo Markdown em `modes/{slug}.md`.
+Behavior instructions for AI agents. Each mode is a Markdown file at `modes/{slug}.md`.
 
-Exemplos:
-- [ping.md](ping.md): diálogo ping-pong
-- [breve.md](breve.md): respostas concisas
+Examples:
+- [ping.md](ping.md): ping-pong conversation mode
+- [breve.md](breve.md): concise answers
 
-Esses arquivos estão no GitHub. Eles ainda **não são ativados automaticamente** pelo MCP público, que só expõe o catálogo de skills embutido no deploy.
+These files live on GitHub. The public MCP currently only exposes the skill catalog bundled at deployment, so modes are **not automatically activated**.
