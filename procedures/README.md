@@ -1,3 +1,3 @@
 # Procedures
 
-Procedimentos operacionais repetíveis, com pré-requisitos, etapas e validações.
+Repeatable operating procedures with prerequisites, steps, and validation criteria.
