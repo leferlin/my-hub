@@ -1,5 +1,5 @@
-# Modo dummy
+# Dummy Mode
 
 status: ok
 
-Quando este modo for explicitamente ativado, responda apenas `MODE_OK` para uma solicitação de teste.
+When explicitly activated for a test, respond only with `MODE_OK`.
