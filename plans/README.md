@@ -1,3 +1,3 @@
 # Plans
 
-Planos, objetivos, decisões e acompanhamentos em Markdown. Crie um arquivo por plano.
+Goals, decisions, and progress tracking in Markdown. Create one file per plan.
