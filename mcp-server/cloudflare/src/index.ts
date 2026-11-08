@@ -7,14 +7,14 @@ function createServer() {
   const server = new McpServer({ name: 'personal-hub', version: '0.2.0' });
 
   server.registerTool('list_skills', {
-    description: 'Lista as skills disponíveis.',
+    description: 'List available skills.',
     inputSchema: z.object({})
   }, async () => ({
     content: [{ type: 'text', text: JSON.stringify(catalog.map(({ name, description }) => ({ name, description })), null, 2) }]
   }));
 
   server.registerTool('search_skills', {
-    description: 'Busca skills por texto.',
+    description: 'Search skills by text.',
     inputSchema: z.object({ query: z.string().min(1) })
   }, async ({ query }) => {
     const q = query.toLowerCase();
@@ -25,13 +25,13 @@ function createServer() {
   });
 
   server.registerTool('get_skill', {
-    description: 'Obtém as instruções completas de uma skill.',
+    description: 'Retrieve the complete instructions for a skill.',
     inputSchema: z.object({ name: z.string().min(1) })
   }, async ({ name }) => {
     const skill = catalog.find(s => s.name === name);
     return skill
       ? { content: [{ type: 'text', text: skill.content }] }
-      : { isError: true, content: [{ type: 'text', text: 'Skill não encontrada' }] };
+      : { isError: true, content: [{ type: 'text', text: 'Skill not found' }] };
   });
 
   return server;
