@@ -1,46 +1,50 @@
-# Personal Hub — MCP Cloudflare Workers
+# Personal Hub MCP — Cloudflare Workers
 
-## Interfaces
+This Cloudflare Worker hosts two separate MCP interfaces. The deployment-specific folder currently contains the runtime implementation; shared business logic may later be extracted to a provider-neutral `core/` directory.
 
-- `GET /health`: estado e versão do Worker.
-- `POST /mcp`: MCP **público e somente leitura**, com conteúdo fictício embutido no deploy. Ferramentas `list_skills`, `search_skills`, `get_skill`.
-- `POST /mcp-admin`: MCP **administrativo**, exige cabeçalho `Authorization: Bearer <MCP_ADMIN_TOKEN>` e acesso GitHub de escrita.
+## Endpoints
 
-**Não aponte o plugin ChatGPT sem autenticação para `/mcp-admin`.** O ChatGPT ainda precisa de um fluxo OAuth adequado para essa área. O endpoint atual é útil para clientes próprios que suportem cabeçalhos Bearer, não substitui OAuth MCP.
+- `GET /health`: public server status and version.
+- `POST /mcp`: public, read-only demo MCP with a build-time skill catalog. Tools: `list_skills`, `search_skills`, `get_skill`.
+- `POST /mcp-admin`: protected GitHub-backed MCP for reading/writing skills, notes, and modes. Requires `Authorization: Bearer <MCP_ADMIN_TOKEN>`.
 
-## Ferramentas administrativas
+**Do not connect the unauthenticated ChatGPT plugin to `/mcp-admin`.** A proper OAuth flow is still required for ChatGPT and other OAuth-based clients. The current static Bearer header is intended only for explicitly controlled clients that support it.
 
+## Administrative tools
+
+- `list_entries`, `get_entry`, `get_entry_metadata`
 - `create_skill`, `update_skill`, `delete_skill`
 - `create_note`, `update_note`, `delete_note`
 - `create_mode`, `update_mode`, `delete_mode`
-- `get_entry_metadata`: recupera SHA exigido nas operações update/delete.
 
-Os arquivos vão para:
+Entry paths:
+- Skills: `skills/{slug}/SKILL.md`
+- Notes: `notes/{slug}.md`
+- Modes: `modes/{slug}.md`
 
-- skill: `skills/{slug}/SKILL.md`
-- note: `notes/{slug}.md`
-- mode: `modes/{slug}.md`
+Slugs contain lowercase letters, numbers, and hyphens. Markdown content has a 64,000-character limit. Updates and deletions require `expected_sha` for optimistic concurrency. All writes produce Git commits. There is no bulk-delete tool.
 
-O `slug` aceita somente minúsculas, números e hífens. O conteúdo é Markdown (máximo de 64.000 caracteres). Updates/deletes exigem `expected_sha` como controle de concorrência. O GitHub registra commits e histórico. Não há bulk delete.
+## Private Cloudflare configuration
 
-## Configuração privada (Cloudflare)
+Under **Workers & Pages → personal-hub → Settings → Variables and Secrets**, configure the following as **secrets**, never plaintext variables:
 
-Em **Workers & Pages → personal-hub → Settings → Variables and Secrets**, configure como **secrets** (nunca plaintext variables):
+1. `GITHUB_TOKEN`: a fine-grained GitHub token restricted to `leandroferlin5/personal-hub`, with **Contents: Read and write** only.
+2. `MCP_ADMIN_TOKEN`: an independent, high-entropy random admin secret (ideally at least 32 bytes).
 
-1. `GITHUB_TOKEN`: token fine-grained do GitHub limitado **somente** ao repositório `leandroferlin5/personal-hub` com permissão **Contents: Read and write**; sem permissões administrativas.
-2. `MCP_ADMIN_TOKEN`: segredo aleatório independente e longo (mínimo sugerido 32 bytes de entropia) para autenticar o cliente administrativo.
+Without these secrets, `/mcp-admin` responds with HTTP 503. Without a valid Bearer token, it returns HTTP 401.
 
-Não cole os tokens em chats, arquivos Git, screenshots nem logs. Configure os dois secrets antes de acessar `/mcp-admin`. Sem eles, o endpoint responde `503`. Sem header Bearer válido, responde `401`.
+The admin token authenticates the MCP client to the Worker; the GitHub token authenticates the Worker to GitHub. Do not share either token in chat, Git, screenshots, or logs.
 
-Esses dois segredos têm papéis diferentes: `MCP_ADMIN_TOKEN` autentica o cliente MCP diante do Worker; `GITHUB_TOKEN` autoriza o Worker a gravar no GitHub.
+**Next security milestone:** replace the static admin-token model with OAuth 2.1, individual user identity, consent, scopes for read/write/delete, and secure session/token handling.
 
-**Próxima etapa obrigatória para ChatGPT/Claude com OAuth:** substituir a autenticação estática administrativa por OAuth 2.1 com controle de identidade, escopos de leitura/escrita, consentimento e armazenamento seguro dos tokens. A Cloudflare dispõe de `@cloudflare/workers-oauth-provider` para isso.
+## Deployment
 
-## Deploy
+Cloudflare Git integration:
+- Root directory: `mcp-server/cloudflare`
+- Build: `npm run build:catalog`
+- Deploy: `npx wrangler deploy`
 
-Cloudflare Git integration: Root directory `mcp-server/cloudflare`, build `npm run build:catalog`, deploy `npx wrangler deploy`.
-
-Alternativa local com Node.js 20+:
+Local setup using Node.js 20+:
 
 ```bash
 cd mcp-server/cloudflare
@@ -50,12 +54,12 @@ npm run check
 npx wrangler dev
 ```
 
-**Observação:** o catálogo público continua incorporado ao build; as entradas criadas no GitHub pelo MCP administrativo NÃO aparecem automaticamente em `/mcp`. Para um hub central realmente dinâmico, a próxima versão deverá ler conteúdo privado do GitHub através de uma sessão OAuth autenticada e não reutilizar o catálogo de demonstração.
+The public skill catalog is bundled at build time. Entries written by the admin MCP do not appear automatically in `/mcp`. A future OAuth-protected endpoint should read private GitHub content dynamically at runtime.
 
-## Segurança operacional
+## Operational safeguards
 
-- Faça revisão humana das alterações propostas por agentes, principalmente exclusões.
-- Não armazene senhas/tokens no repositório.
-- Rotacione os tokens e revise auditorias regularmente.
-- Não divulgue seu `MCP_ADMIN_TOKEN` para aplicativos de terceiros.
-- O código está em fase MVP; requer teste de integração e compilação antes de ser considerado produção.
+- Review agent-proposed changes, especially deletions.
+- Keep secrets out of the repository.
+- Rotate credentials and review access regularly.
+- Do not distribute the admin Bearer token to third-party clients.
+- This is an MVP and still requires compilation and end-to-end security testing before production use.
