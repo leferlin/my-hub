@@ -45,7 +45,7 @@ export default {
     const pathname = new URL(request.url).pathname;
     if (pathname === '/health') return Response.json({ ok: true, skills: catalog.length, version: '0.3.0', oauthEnabled: env.ENABLE_OAUTH === 'true' });
     // Keep OAuth disabled until KV and secrets are installed and tested.
-    const oauthRoute = pathname === '/mcp-secure' || pathname === '/authorize' || pathname === '/callback' || pathname.startsWith('/oauth/') || pathname.startsWith('/.well-known/');
+    const oauthRoute = pathname === '/mcp-secure' || pathname === '/authorize' || pathname === '/callback' || pathname === '/phone' || pathname === '/phone/start' || pathname.startsWith('/oauth/') || pathname.startsWith('/.well-known/');
     if (oauthRoute) {
       if (env.ENABLE_OAUTH !== 'true') return new Response('OAuth setup pending', { status: 503 });
       return personalHubOAuth.fetch(request, env as any, ctx);
