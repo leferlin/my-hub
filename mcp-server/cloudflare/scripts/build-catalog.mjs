@@ -10,9 +10,9 @@ for (const dir of names) {
     const description = content.match(/^description:\s*(.+)$/m)?.[1]?.trim();
     if (name && description) skills.push({ name, description, content });
   } catch {
-    // Diretórios sem SKILL.md não entram no catálogo.
+    // Directories without SKILL.md are excluded from the catalog.
   }
 }
-if (!skills.length) throw new Error('Nenhuma skill encontrada');
+if (!skills.length) throw new Error('No skills found');
 await writeFile(new URL('../src/catalog.json', import.meta.url), JSON.stringify(skills, null, 2));
-console.log(`Catálogo gerado: ${skills.length} skills`);
+console.log(`Catalog generated: ${skills.length} skills`);
