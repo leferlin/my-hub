@@ -1,3 +1,3 @@
 # Knowledge
 
-Informações de referência e documentação pessoal, com fontes e datas quando relevantes.
+Reference information and personal documentation, including sources and dates when relevant.
