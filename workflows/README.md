@@ -1,3 +1,3 @@
 # Workflows
 
-Fluxos e automações compostos por etapas, responsáveis, condições e resultados esperados.
+Multi-step processes and automations with actors, conditions, and expected outcomes.
