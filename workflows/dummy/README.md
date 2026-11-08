@@ -1,9 +1,9 @@
-# Workflow dummy
+# Dummy Workflow
 
 status: ok
 
-Entrada: `ping`
+Input: `ping`
 
-Etapas: validar entrada → responder.
+Steps: validate input → respond.
 
-Saída esperada: `WORKFLOW_OK`.
+Expected output: `WORKFLOW_OK`.
