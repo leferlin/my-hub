@@ -4,6 +4,8 @@ Repositório privado e centralizado de planos, tarefas, listas, procedimentos, c
 
 ## Estrutura
 - `plans/`: planos e objetivos
+- `notes/`: notas Markdown
+- `modes/`: instruções de comportamento para agentes (ex.: PING, breve)
 - `tasks/`: tarefas e listas
 - `procedures/`: procedimentos operacionais
 - `knowledge/`: notas e referências
@@ -12,7 +14,9 @@ Repositório privado e centralizado de planos, tarefas, listas, procedimentos, c
 - `scripts/`: algoritmos e utilitários
 - `mcp-server/`: interface de consulta pelos agentes
 
-Os diretórios aparecerão à medida que arquivos forem adicionados.
+Os diretórios são mantidos no GitHub com arquivos Markdown; Git não versiona pastas vazias.
+
+**Nota sobre o MCP:** `notes/` e `modes/` são persistidos no GitHub, mas o endpoint público `/mcp` ainda lê apenas o catálogo de demonstração de `skills/`, gerado no build. O endpoint `/mcp-admin` possui ferramentas de CRUD para as três categorias, mas sua utilização requer configuração de secrets, autenticação e validação; OAuth para acesso direto pelo ChatGPT ainda não foi implementado.
 
 ## MVP de integração
 `mcp-server/cloudflare/` contém um MCP remoto de **demonstração**, com as ferramentas `list_skills`, `search_skills` e `get_skill`.
