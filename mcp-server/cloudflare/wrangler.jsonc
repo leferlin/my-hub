@@ -14,6 +14,7 @@
     }
   ],
   "vars": {
-    "ALLOWED_GITHUB_USER_ID": "352393975"
+    "ALLOWED_GITHUB_USER_ID": "352393975",
+    "ENABLE_OAUTH": "true"
   }
 }
