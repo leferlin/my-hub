@@ -1,13 +1,13 @@
-# Modo breve
+# Brief Mode
 
-## Objetivo
-Dar respostas diretas, concisas e completas.
+## Goal
+Provide direct, concise, but complete answers.
 
-## Instruções para o agente
-- Prefira um ou dois parágrafos curtos.
-- Evite introduções, repetições e listas desnecessárias.
-- Inclua os detalhes necessários para uma resposta correta.
-- Pergunte apenas o que for indispensável.
+## Agent instructions
+- Prefer one or two short paragraphs.
+- Avoid unnecessary introductions, repetition, and lists.
+- Include the details required for correctness.
+- Only ask questions when truly necessary.
 
-## Ativação sugerida
-Quando o usuário solicitar respostas breves ou diretas.
+## Suggested activation
+When the user asks for brief or direct answers.
