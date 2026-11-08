@@ -116,9 +116,13 @@ async function handleAuthorization(request: Request, env: OAuthEnv) {
 ${warning}<p>Requested permissions:</p><ul>${permissions}</ul>
 <p>Only approve requests that you personally initiated. Write and delete permissions allow an agent to modify your GitHub repository.</p>
 <form method="POST"><input type="hidden" name="handle" value="${escapeHtml(consent.handle)}">${scopeInputs}<button name="decision" value="approve">Approve</button> <button name="decision" value="deny">Deny</button></form>`;
-    const responseHeaders = consent.headers;
-    responseHeaders.set('Content-Type', 'text/html; charset=utf-8');
-    return responsePage('Authorize Personal Hub', html, 200, responseHeaders);
+    // Return the library's original Headers object unchanged except for Content-Type.
+    // beginConsent() sets a per-transaction __Host- binding cookie; copying,
+    // reconstructing or dropping those headers can break approval.
+    consent.headers.set('Content-Type', 'text/html; charset=utf-8');
+    return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Authorize Personal Hub</title></head><body style="font:16px system-ui;max-width:640px;margin:4rem auto;padding:1rem"><h1>Authorize Personal Hub</h1>${html}</body></html>`, {
+      headers: consent.headers,
+    });
   }
   if (request.method === 'POST') {
     const form = await request.formData();
