@@ -1,8 +1,8 @@
-# Plano dummy
+# Dummy Plan
 
 status: ok
 
-Exemplo fictício para validar armazenamento de planos no Personal Hub.
+Fictional example for validating plan storage in Personal Hub.
 
-- [ ] Definir objetivo
-- [ ] Revisar progresso
+- [ ] Define a goal
+- [ ] Review progress
