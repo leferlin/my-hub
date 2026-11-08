@@ -1,18 +1,20 @@
 import { OAuthProvider, AuthorizationError } from '@cloudflare/workers-oauth-provider';
 import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createGitHubMcpServer, type Secrets } from './admin';
+import { createPair, renderPairOption, finishPair, phoneLanding, startPhoneLogin, completePhoneLogin } from './phone-approval';
 
 const ORIGIN = 'https://personal-hub.leandroferlin5.workers.dev';
 const RESOURCE = `${ORIGIN}/mcp-secure`;
 const CALLBACK = `${ORIGIN}/callback`;
 const SCOPES = ['hub:read', 'hub:write', 'hub:delete', 'offline_access'];
 
-interface OAuthEnv extends Secrets {
+export interface OAuthEnv extends Secrets {
   OAUTH_KV: KVNamespace;
   GITHUB_CLIENT_ID?: string;
   GITHUB_CLIENT_SECRET?: string;
   ALLOWED_GITHUB_USER_ID?: string;
   OAUTH_PROVIDER: any;
+  ENABLE_PHONE_APPROVAL?: string;
 }
 
 type AuthorizedContext = ExecutionContext & {
@@ -41,7 +43,7 @@ function ensureGitHubIdentityConfig(env: OAuthEnv) {
   }
 }
 
-function githubAuthorizationUrl(env: OAuthEnv, state: string, challenge: string) {
+export function githubAuthorizationUrl(env: OAuthEnv, state: string, challenge: string) {
   const url = new URL('https://github.com/login/oauth/authorize');
   url.searchParams.set('client_id', env.GITHUB_CLIENT_ID!);
   url.searchParams.set('redirect_uri', CALLBACK);
@@ -52,13 +54,13 @@ function githubAuthorizationUrl(env: OAuthEnv, state: string, challenge: string)
   return url.toString();
 }
 
-async function sha256Base64Url(value: string) {
+export async function sha256Base64Url(value: string) {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
   return btoa(String.fromCharCode(...new Uint8Array(digest)))
     .replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
-async function exchangeGitHubIdentity(env: OAuthEnv, code: string, verifier: string) {
+export async function exchangeGitHubIdentity(env: OAuthEnv, code: string, verifier: string) {
   const exchange = await fetch('https://github.com/login/oauth/access_token', {
     method: 'POST',
     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'User-Agent': 'personal-hub-mcp' },
@@ -110,12 +112,20 @@ async function handleAuthorization(request: Request, env: OAuthEnv) {
       .map(scope => `<li><code>${escapeHtml(scope)}</code></li>`).join('');
     const warning = details.redirectIsLoopback ? '<p><strong>This authorization sends access to an application running on your computer.</strong></p>' : '';
     const scopeInputs = (details.scope as string[]).map(scope => `<input type="hidden" name="scope" value="${escapeHtml(scope)}">`).join('');
+    const phoneOption = env.ENABLE_PHONE_APPROVAL === 'true'
+      ? await createPair(env, {
+          handle: consent.handle,
+          clientName: String(details.clientName || 'Unnamed MCP client'),
+          redirectHost: String(details.redirectHost || 'unknown'),
+          scopes: details.scope as string[]
+        })
+      : null;
     const html = `<p><strong>${clientName}</strong> is requesting access to Personal Hub.</p>
 <p>Client domain: ${clientDomain || 'Unverified/self-registered client'}</p>
 <p>Token destination: <strong>${redirectHost}</strong></p>
 ${warning}<p>Requested permissions:</p><ul>${permissions}</ul>
 <p>Only approve requests that you personally initiated. Write and delete permissions allow an agent to modify your GitHub repository.</p>
-<form method="POST"><input type="hidden" name="handle" value="${escapeHtml(consent.handle)}">${scopeInputs}<button name="decision" value="approve">Approve</button> <button name="decision" value="deny">Deny</button></form>`;
+<form method="POST"><input type="hidden" name="handle" value="${escapeHtml(consent.handle)}">${scopeInputs}<button name="decision" value="approve">Approve</button> <button name="decision" value="deny">Deny</button></form>${phoneOption ? renderPairOption(phoneOption.displayedCode, consent.handle, details.scope as string[]) : ''}`;
     // Return the library's original Headers object unchanged except for Content-Type.
     // beginConsent() sets a per-transaction __Host- binding cookie; copying,
     // reconstructing or dropping those headers can break approval.
@@ -127,6 +137,9 @@ ${warning}<p>Requested permissions:</p><ul>${permissions}</ul>
   if (request.method === 'POST') {
     const form = await request.formData();
     const handle = String(form.get('handle') ?? '');
+    if (form.get('decision') === 'phone-complete' && env.ENABLE_PHONE_APPROVAL === 'true') {
+      return finishPair(request, env, handle, String(form.get('phone_code') || ''));
+    }
     if (form.get('decision') !== 'approve') {
       const denied = await oauth.denyConsent(request, handle);
       return new Response(null, { status: 302, headers: denied.headers });
@@ -140,6 +153,9 @@ ${warning}<p>Requested permissions:</p><ul>${permissions}</ul>
 
 async function handleCallback(request: Request, env: OAuthEnv) {
   ensureGitHubIdentityConfig(env);
+  if (env.ENABLE_PHONE_APPROVAL === 'true' && new URL(request.url).searchParams.get('state')?.startsWith('ph_')) {
+    return completePhoneLogin(request, env);
+  }
   const oauth = env.OAUTH_PROVIDER;
   const { request: original, data, headers } = await oauth.finishUpstream<{ verifier: string }>(request);
   const params = new URL(request.url).searchParams;
@@ -164,6 +180,10 @@ const defaultHandler = {
       const path = new URL(request.url).pathname;
       if (path === '/authorize') return await handleAuthorization(request, env);
       if (path === '/callback') return await handleCallback(request, env);
+      if (env.ENABLE_PHONE_APPROVAL === 'true') {
+        if (path === '/phone' && request.method === 'GET') return phoneLanding(request, env);
+        if (path === '/phone/start') return startPhoneLogin(request, env);
+      }
       return new Response('Not Found', { status: 404 });
     } catch (error) {
       if (error instanceof AuthorizationError && error.redirectTo) {
