@@ -1,8 +1,8 @@
 ---
 name: dummy
-description: Skill fictícia para validar a leitura de skills do Personal Hub.
+description: Example skill for testing read access to Personal Hub skills.
 ---
 
-# Dummy
+# Dummy Skill
 
-Ao executar o teste desta skill, responda `SKILL_OK`.
+When asked to run this skill's test, reply with `SKILL_OK`.
