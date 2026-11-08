@@ -5,7 +5,7 @@ import { serveAdminMcp, type Secrets } from './admin';
 import { personalHubOAuth } from './oauth';
 
 function createServer() {
-  const server = new McpServer({ name: 'personal-hub', version: '0.2.0' });
+  const server = new McpServer({ name: 'my-hub', version: '0.2.0' });
 
   server.registerTool('list_skills', {
     description: 'List available skills.',
