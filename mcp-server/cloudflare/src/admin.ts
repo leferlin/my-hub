@@ -76,7 +76,15 @@ export function createGitHubMcpServer(env: Secrets, scopes: readonly string[] = 
       }
       const binary = atob(data.content.replace(/\s/g, ''));
       const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-      return result({ kind, slug, path: gitPath(kind, slug), sha: data.sha, content: new TextDecoder().decode(bytes) });
+      const markdown = new TextDecoder().decode(bytes);
+      // Return the file body as MCP text, rather than JSON nesting a "content"
+      // field. Some MCP clients unwrap tool responses and discard nested content.
+      return {
+        content: [{
+          type: 'text' as const,
+          text: `File: ${gitPath(kind, slug)}\nSHA: ${data.sha}\n\n${markdown}`
+        }]
+      };
     } catch (e) { return failed(e); }
   });
   server.registerTool('list_entries', {
