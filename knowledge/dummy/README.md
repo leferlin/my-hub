@@ -1,5 +1,5 @@
-# Conhecimento dummy
+# Dummy Knowledge
 
 status: ok
 
-Registro de referência fictício. Resposta de teste: `KNOWLEDGE_OK`.
+Fictional reference record. Test response: `KNOWLEDGE_OK`.
