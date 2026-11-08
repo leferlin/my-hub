@@ -29,11 +29,13 @@ The Cloudflare implementation currently exposes two separate endpoints:
 
 The public `/mcp` endpoint does **not** load the live GitHub repository. Its bundled catalog is refreshed only during deployment. New GitHub files do not automatically appear there.
 
-The administrative tools use the GitHub API at runtime and produce Git commits when writing files. They require both `MCP_ADMIN_TOKEN` and `GITHUB_TOKEN` configured as Cloudflare secrets. OAuth for ChatGPT and other clients is **not yet implemented**. Do not treat the admin endpoint as ready for public use.
+The administrative tools use the GitHub API at runtime and produce Git commits when writing files. They require both `MCP_ADMIN_TOKEN` and `GITHUB_TOKEN` configured as Cloudflare secrets. OAuth code is now staged behind the `ENABLE_OAUTH` flag; Cloudflare KV, GitHub sign-in credentials, deployment, and end-to-end validation are still pending. Do not treat the admin endpoint as ready for public use.
 
 **Security:** The public demo endpoint has no authentication. Never expose private notes, plans, credentials, or sensitive skills through the demo catalog. Keep secrets out of Git, screenshots, logs, and conversations.
 
-See [MCP documentation](mcp-server/cloudflare/README.md) and [OAuth setup plan](mcp-server/cloudflare/OAUTH_SETUP.md).
+The OAuth-protected endpoint will be `/mcp-secure` once enabled. It uses GitHub sign-in for owner identity and separate Cloudflare secrets for repository access. This release does not yet implement cross-device phone approval.
+
+See [MCP documentation](mcp-server/cloudflare/README.md) and [OAuth setup instructions](mcp-server/cloudflare/OAUTH_SETUP.md).
 
 ## Language policy
 
