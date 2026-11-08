@@ -1,14 +1,14 @@
 ---
 name: revisar-texto
-description: Rotina genérica para revisar clareza, ortografia e concisão de textos.
+description: General-purpose text review for clarity, grammar, and concision.
 ---
 
-# Revisar texto
+# Review Text
 
-## Procedimento
-1. Preserve os fatos, intenção e tom do texto.
-2. Corrija erros de ortografia, gramática e pontuação.
-3. Melhore clareza e concisão sem acrescentar fatos.
-4. Entregue uma versão revisada e, se útil, um resumo das alterações.
+## Procedure
+1. Preserve the original facts, intent, and tone.
+2. Correct spelling, grammar, and punctuation.
+3. Improve clarity and concision without introducing new claims.
+4. Provide the revised text and, when helpful, a brief summary of changes.
 
-Não exponha informações confidenciais a ferramentas externas.
+Do not disclose confidential information to external tools.
