@@ -220,7 +220,8 @@ export const personalHubOAuth = new OAuthProvider<OAuthEnv>({
   tokenEndpoint: '/oauth/token',
   clientRegistrationEndpoint: '/oauth/register',
   scopesSupported: SCOPES,
-  requiredScopes: ['hub:read'],
+  // Require an explicit write grant for MCP access. Delete remains opt-in.
+  requiredScopes: ['hub:read', 'hub:write'],
   resourceMetadata: {
     resource: RESOURCE,
     authorization_servers: [ORIGIN]
