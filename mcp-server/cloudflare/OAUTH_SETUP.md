@@ -99,7 +99,7 @@ When eventually enabled, set `ENABLE_PHONE_APPROVAL = "true"` in Wrangler `vars`
 Expected flow:
 
 1. On the laptop, add/start the existing `/mcp-secure` connection in VS Code. Keep its initial Personal Hub consent page open.
-2. Instead of the normal **Approve** button, use the **Approve from your personal phone** option. The page displays an 80-bit random pairing code, grouped for readability, valid for 10 minutes.
+2. Instead of the normal **Approve** button, use the **Approve from your personal phone** option. The page displays a four-character pairing identifier (32-character alphabet), valid for 10 minutes.
 3. Open `https://personal-hub.leandroferlin5.workers.dev/phone` on your phone. Type the pairing code.
 4. Review the requesting client, callback destination, and scopes on the phone. Choose **Authenticate with GitHub and approve**, using the allowlisted personal GitHub account.
 5. On successful GitHub callback, the phone displays an approval confirmation. GitHub's identity token is discarded.
@@ -108,7 +108,7 @@ Expected flow:
 Technical properties:
 - The laptop still uses the normal OAuth authorization code/PKCE flow; VS Code requires no plugin or device-grant support.
 - No GitHub password, GitHub token, Personal Hub token, or authorization code is transferred between phone and laptop.
-- Pairing codes are high entropy and stored with a short TTL in `OAUTH_KV`; the GitHub callback uses its own one-time `state` and browser-bound cookie.
+- Pairing identifiers are four characters long (20 bits of entropy), stored with a short TTL in `OAUTH_KV`. Code lookups have best-effort per-IP throttling (five lookups per 10 minutes), though KV counters are not atomic and are not a substitute for edge rate limiting. The GitHub callback uses its own one-time `state` and browser-bound cookie.
 - Only the configured numeric `ALLOWED_GITHUB_USER_ID` can authorize; the laptop must also possess its original browser-bound consent cookie.
 - Phone approval grants exactly the scopes shown on the pairing page. It does not expand the client's requested permissions.
 - This implementation intentionally keeps consent before the identity-provider redirect, following Cloudflare's shared-upstream OAuth guidance.
@@ -118,7 +118,7 @@ Technical properties:
 Security caveats / verification plan:
 - Validate `npm run check` and `npm run deploy` before enabling the pilot.
 - Confirm ordinary ChatGPT OAuth still works when the pilot is disabled.
-- Confirm pairing expiration and invalid/guessed codes fail; verify a different GitHub account cannot approve.
+- Confirm pairing expiration, guessing rate limits, and accidental collision handling; verify a different GitHub account cannot approve. For production-grade protection, add Cloudflare edge rate limiting / Turnstile and monitor abuse.
 - Confirm the phone cannot finish OAuth by itself; the desktop consent cookie and PKCE must be required.
 - Confirm the callback only completes when the correct phone browser cookie and `state` match.
 - Check Cloudflare Worker logs for OAuth failures without logging sensitive token values.
