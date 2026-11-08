@@ -24,9 +24,14 @@ const escapeHtml = (value: string) =>
   value.replace(/[&<>"']/g, char => `&#${char.charCodeAt(0)};`);
 
 function responsePage(title: string, content: string, status = 200, headers?: HeadersInit) {
+  const safeHeaders = new Headers(headers);
+  safeHeaders.set('Content-Type', 'text/html; charset=utf-8');
+  safeHeaders.set('Cache-Control', 'no-store');
+  safeHeaders.set('X-Frame-Options', 'DENY');
+  safeHeaders.set('Content-Security-Policy', "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'");
   return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(title)}</title></head><body style="font:16px system-ui;max-width:640px;margin:4rem auto;padding:1rem"><h1>${escapeHtml(title)}</h1>${content}</body></html>`, {
     status,
-    headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Frame-Options': 'DENY', 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'", ...headers },
+    headers: safeHeaders,
   });
 }
 
