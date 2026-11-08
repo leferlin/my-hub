@@ -1,6 +1,9 @@
-# Personal Hub — OAuth 2.1 setup
+# My Hub — OAuth 2.1 setup
 
 ## Status
+
+**Naming:** My Hub is the new project display name. Do not change the GitHub repository path, GitHub OAuth callback URL, or Cloudflare Worker host until each is migrated and tested separately.
+
 
 The OAuth implementation is committed in `src/oauth.ts` and routed from `src/index.ts`. It is **disabled by default** and has not yet passed a live OAuth login or write test. The original `/mcp` demo endpoint remains unchanged.
 
