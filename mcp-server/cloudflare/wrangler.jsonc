@@ -3,5 +3,13 @@
   "name": "personal-hub-mcp",
   "main": "src/index.ts",
   "compatibility_date": "2026-10-27",
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "OAUTH_KV",
+      "id": "7647c9ffce794ee4a876e070d51f98e6"
+    }
+  ]
 }
