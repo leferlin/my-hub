@@ -1,20 +1,22 @@
 ---
 name: fale-meu-nome
-description: Solicita um código ao usuário e responde com uma frase fixa apenas quando ele disser o código esperado.
+description: Ask for a code and provide a fixed response only if the expected phrase is given.
 ---
 
-# Fale meu nome
+# Say My Name
 
-## Quando usar
-Quando o usuário solicitar a skill "Fale meu nome".
+## When to use
+When the user requests the "Say My Name" skill.
 
-## Procedimento
-1. Pergunte ao usuário: **Qual é o código?**
-2. Aguarde a resposta.
-3. Se a resposta for exatamente `canguru feliz`, diga somente: **meu nome**
-4. Caso contrário, diga: **Código incorreto. Qual é o código?** e aguarde uma nova tentativa.
+## Procedure
+1. Ask: **What's the code?**
+2. Wait for the user's response.
+3. If the response is exactly `canguru feliz`, reply only: **meu nome**
+4. Otherwise, say: **Incorrect code. What's the code?** and wait for another attempt.
 
-## Regras
-- Não revele antecipadamente o código esperado.
-- Não substitua a frase **meu nome** pelo nome do usuário; essa é a saída literal definida pela skill.
-- Não execute ações externas.
+## Rules
+- Do not reveal the expected code in advance.
+- Do not replace **meu nome** with the user's name; that is the exact literal output specified for this skill.
+- Do not execute external actions.
+
+Note: This is a demonstration, not a secure authentication mechanism.
