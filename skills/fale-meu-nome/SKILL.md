@@ -11,7 +11,7 @@ Quando o usuário solicitar a skill "Fale meu nome".
 ## Procedimento
 1. Pergunte ao usuário: **Qual é o código?**
 2. Aguarde a resposta.
-3. Se a resposta for exatamente `canguru perneta`, diga somente: **Meu nome**
+3. Se a resposta for exatamente `canguru feliz`, diga somente: **Meu nome**
 4. Caso contrário, diga: **Código incorreto. Qual é o código?** e aguarde uma nova tentativa.
 
 ## Regras
