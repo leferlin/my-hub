@@ -1,5 +1,5 @@
 ---
-name: fale-meu-nome
+name: fala-meu-nome
 description: Ask for a code and provide a fixed response only if the expected phrase is given.
 ---
 
