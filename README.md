@@ -1,34 +1,40 @@
-# personal-hub
+# Personal Hub
 
-Repositório privado e centralizado de planos, tarefas, listas, procedimentos, conhecimento, skills de IA, workflows e scripts.
+A private, centralized repository for personal plans, tasks, lists, procedures, knowledge, AI agent skills, workflows, and scripts.
 
-## Estrutura
-- `plans/`: planos e objetivos
-- `notes/`: notas Markdown
-- `modes/`: instruções de comportamento para agentes (ex.: PING, breve)
-- `tasks/`: tarefas e listas
-- `procedures/`: procedimentos operacionais
-- `knowledge/`: notas e referências
-- `workflows/`: fluxos e automações
-- `skills/`: instruções reutilizáveis para agentes (padrão Agent Skills)
-- `scripts/`: algoritmos e utilitários
-- `mcp-server/`: interface de consulta pelos agentes
+## Repository structure
 
-Os diretórios são mantidos no GitHub com arquivos Markdown; Git não versiona pastas vazias.
+- `plans/`: goals, plans, and progress
+- `notes/`: Markdown notes
+- `modes/`: behavioral instructions for agents (e.g., PING and Brief)
+- `tasks/`: tasks and checklists
+- `procedures/`: repeatable operating procedures
+- `knowledge/`: reference notes and documentation
+- `workflows/`: workflows and automations
+- `skills/`: reusable agent instructions following the Agent Skills convention
+- `scripts/`: algorithms and utilities
+- `mcp-server/`: MCP interfaces and deployment code
 
-**Nota sobre o MCP:** `notes/` e `modes/` são persistidos no GitHub, mas o endpoint público `/mcp` ainda lê apenas o catálogo de demonstração de `skills/`, gerado no build. O endpoint `/mcp-admin` possui ferramentas de CRUD para as três categorias, mas sua utilização requer configuração de secrets, autenticação e validação; OAuth para acesso direto pelo ChatGPT ainda não foi implementado.
+Git tracks files, not empty directories, so each folder contains Markdown or other files.
 
-## MVP de integração
-`mcp-server/cloudflare/` contém um MCP remoto de **demonstração**, com as ferramentas `list_skills`, `search_skills` e `get_skill`.
+## MCP status
 
-**Atenção:** o MVP ainda não tem autenticação: NÃO publique skills privadas. As skills de demonstração são intencionalmente fictícias. Antes de qualquer deploy com dados reais, adicionar OAuth e controle de acesso.
+The Cloudflare implementation currently exposes two separate endpoints:
 
-O catálogo é incorporado ao build. O servidor não acessa diretamente o repositório privado em tempo real; alterações exigem novo deploy.
+| Endpoint | Purpose | Status |
+| --- | --- | --- |
+| `/health` | Health check | Public |
+| `/mcp` | Demo skill discovery and reading | Public, read-only, bundled at build time |
+| `/mcp-admin` | GitHub-backed reading and writing of skills, notes, and modes | Implemented, but requires secrets and integration testing |
 
-## Escrita pelo MCP (MVP)
+The public `/mcp` endpoint does **not** load the live GitHub repository. Its bundled catalog is refreshed only during deployment. New GitHub files do not automatically appear there.
 
-O servidor oferece uma segunda interface administrativa `/mcp-admin`, separada do endpoint público `/mcp`. Ela permite criar, ler, atualizar, listar e excluir **skills, notes e modes** no GitHub, com histórico de commits e verificação de SHA antes de atualizações/exclusões.
+The administrative tools use the GitHub API at runtime and produce Git commits when writing files. They require both `MCP_ADMIN_TOKEN` and `GITHUB_TOKEN` configured as Cloudflare secrets. OAuth for ChatGPT and other clients is **not yet implemented**. Do not treat the admin endpoint as ready for public use.
 
-A interface administrativa exige `MCP_ADMIN_TOKEN` e `GITHUB_TOKEN` como secrets no Cloudflare Worker. **Não está pronta para o ChatGPT com OAuth:** requer uma etapa adicional de autenticação OAuth 2.1. Não inclua tokens no repositório nem na conversa.
+**Security:** The public demo endpoint has no authentication. Never expose private notes, plans, credentials, or sensitive skills through the demo catalog. Keep secrets out of Git, screenshots, logs, and conversations.
 
-Consulte [instruções do MCP](mcp-server/cloudflare/README.md).
+See [MCP documentation](mcp-server/cloudflare/README.md) and [OAuth setup plan](mcp-server/cloudflare/OAUTH_SETUP.md).
+
+## Language policy
+
+English is the default language for documentation, content, agent-facing descriptions, and new code comments. Existing stable directory names, skill slugs, API identifiers, and literal test responses remain unchanged for compatibility. Use English for newly created entries.
