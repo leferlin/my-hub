@@ -16,6 +16,6 @@
   "vars": {
     "ALLOWED_GITHUB_USER_ID": "352393975",
     "ENABLE_OAUTH": "true",
-    "ENABLE_PHONE_APPROVAL": "false"
+    "ENABLE_PHONE_APPROVAL": "true"
   }
 }
