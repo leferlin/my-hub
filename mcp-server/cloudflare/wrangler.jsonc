@@ -4,12 +4,16 @@
   "main": "src/index.ts",
   "compatibility_date": "2026-10-27",
   "compatibility_flags": [
-    "nodejs_compat"
+    "nodejs_compat",
+    "global_fetch_strictly_public"
   ],
   "kv_namespaces": [
     {
       "binding": "OAUTH_KV",
       "id": "7647c9ffce794ee4a876e070d51f98e6"
     }
-  ]
+  ],
+  "vars": {
+    "ALLOWED_GITHUB_USER_ID": "352393975"
+  }
 }
