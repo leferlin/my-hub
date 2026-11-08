@@ -1,5 +1,5 @@
-import OAuthProvider, { AuthorizationError } from '@cloudflare/workers-oauth-provider';
-import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
+import { OAuthProvider, AuthorizationError } from '@cloudflare/workers-oauth-provider';
+import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createGitHubMcpServer, type Secrets } from './admin';
 
 const ORIGIN = 'https://personal-hub.leandroferlin5.workers.dev';
@@ -104,12 +104,13 @@ async function handleAuthorization(request: Request, env: OAuthEnv) {
       .filter(s => s !== 'offline_access')
       .map(scope => `<li><code>${escapeHtml(scope)}</code></li>`).join('');
     const warning = details.redirectIsLoopback ? '<p><strong>This authorization sends access to an application running on your computer.</strong></p>' : '';
+    const scopeInputs = (details.scope as string[]).map(scope => `<input type="hidden" name="scope" value="${escapeHtml(scope)}">`).join('');
     const html = `<p><strong>${clientName}</strong> is requesting access to Personal Hub.</p>
 <p>Client domain: ${clientDomain || 'Unverified/self-registered client'}</p>
 <p>Token destination: <strong>${redirectHost}</strong></p>
 ${warning}<p>Requested permissions:</p><ul>${permissions}</ul>
 <p>Only approve requests that you personally initiated. Write and delete permissions allow an agent to modify your GitHub repository.</p>
-<form method="POST"><input type="hidden" name="handle" value="${escapeHtml(consent.handle)}"><button name="decision" value="approve">Approve</button> <button name="decision" value="deny">Deny</button></form>`;
+<form method="POST"><input type="hidden" name="handle" value="${escapeHtml(consent.handle)}">${scopeInputs}<button name="decision" value="approve">Approve</button> <button name="decision" value="deny">Deny</button></form>`;
     const responseHeaders = consent.headers;
     responseHeaders.set('Content-Type', 'text/html; charset=utf-8');
     return responsePage('Authorize Personal Hub', html, 200, responseHeaders);
@@ -122,7 +123,7 @@ ${warning}<p>Requested permissions:</p><ul>${permissions}</ul>
       return new Response(null, { status: 302, headers: denied.headers });
     }
     // Approve only the scopes already requested; no client-controlled privilege increase.
-    const approved = await oauth.approveConsent(request, handle, {});
+    const approved = await oauth.approveConsent(request, handle, { scope: form.getAll('scope').map(String) });
     return startGitHubLogin(env, approved.request, approved.headers);
   }
   return new Response('Method Not Allowed', { status: 405 });
