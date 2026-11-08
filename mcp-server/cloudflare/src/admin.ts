@@ -80,7 +80,37 @@ export function createGitHubMcpServer(env: Secrets, scopes: readonly string[] = 
   const canWrite = scopes.includes('hub:write');
   const canDelete = scopes.includes('hub:delete');
   if (!canRead) throw new Error('Missing hub:read scope');
-  const server = new McpServer({ name: 'personal-hub-admin', version: '0.3.0' });
+  const server = new McpServer(
+    {
+      name: 'personal-hub-secure',
+      version: '0.4.0',
+      description: 'Private remote GitHub-backed knowledge, reusable agent skills and behavioral modes.'
+    },
+    {
+      instructions:
+        'Personal Hub is a REMOTE, GitHub-backed source of reusable skills, modes, notes, plans, tasks, procedures, knowledge, workflows, and scripts. ' +
+        'Use the Hub MCP tools, not the local workspace, to discover/read/write Hub entries. ' +
+        'Each skill and mode MUST be self-contained: do not split required instructions into shared files such as modes/_rules.md. ' +
+        'List the relevant category before guessing slugs; read a skill/mode before applying it. ' +
+        'Retrieving an entry does not automatically execute or install it. ' +
+        'For complete rules call get_hub_guide. Updates require a current GitHub SHA. ' +
+        'Respect OAuth scopes and confirm surprising or destructive actions.'
+    }
+  );
+  server.registerTool('get_hub_guide', {
+    description: 'Read the complete Personal Hub agent onboarding guide (AGENTS.md): what this remote server is for, self-contained mode/skill rules, category layout, and proper workflows. Read when first using the Hub or before authoring entries.',
+    inputSchema: z.object({})
+  }, async () => {
+    try {
+      const data = await github(env, 'GET', 'AGENTS.md');
+      if (data.type !== 'file' || data.encoding !== 'base64' || typeof data.content !== 'string') {
+        throw new Error('Invalid guide file response');
+      }
+      const binary = atob(data.content.replace(/\\s/g, ''));
+      const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+      return { content: [{ type: 'text' as const, text: new TextDecoder().decode(bytes) }] };
+    } catch (error) { return failed(error); }
+  });
   server.registerTool('get_entry', {
     description: 'Read full Markdown and SHA for a skill, note, mode, plan, task, procedure, knowledge item, workflow, or script directly from private GitHub.',
     inputSchema: z.object({ kind: kindSchema, slug: slugSchema })
