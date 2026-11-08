@@ -1,5 +1,5 @@
 # Tasks
 
-Tarefas, listas de verificação e próximos passos em Markdown.
+To-do lists, checklists, and next actions in Markdown.
 
-Exemplo: `- [ ] Revisar tarefa`.
+Example: `- [ ] Review task`.
