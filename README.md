@@ -1,6 +1,6 @@
-# Personal Hub
+# My Hub
 
-A private, centralized repository for personal plans, tasks, lists, procedures, knowledge, AI agent skills, workflows, and scripts.
+**My Hub** (formerly Personal Hub) is a private, centralized repository for personal plans, tasks, lists, procedures, knowledge, AI agent skills, workflows, and scripts.
 
 ## Repository structure
 
@@ -16,6 +16,10 @@ A private, centralized repository for personal plans, tasks, lists, procedures, 
 - `mcp-server/`: MCP interfaces and deployment code
 
 Git tracks files, not empty directories, so each folder contains Markdown or other files.
+
+## Naming and migration
+
+The project's new display name is **My Hub**. The GitHub repository is temporarily still `leandroferlin5/personal-hub`, and the Cloudflare Worker URL remains `personal-hub.leandroferlin5.workers.dev` until a separate endpoint migration. Keep these technical identifiers unchanged until the repository rename and integration verification are complete.
 
 ## MCP status
 
