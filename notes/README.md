@@ -1,8 +1,8 @@
 # Notes
 
-Notas e registros reutilizáveis por agentes de IA.
+Reusable notes and records for AI agents.
 
-Crie um arquivo Markdown por nota, por exemplo `notes/ideias.md`.
-O endpoint administrativo usa o formato `notes/{slug}.md`.
+Create one Markdown file per note, for example `notes/ideas.md`.
+The administrative endpoint uses the path `notes/{slug}.md`.
 
-Notas pessoais não devem ser expostas no MCP público de demonstração. A leitura e escrita pelo MCP administrativo dependerá de autenticação configurada e validada.
+Do not expose private notes through the public demonstration MCP. Administrative read/write access requires configured and tested authentication.
