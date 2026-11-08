@@ -1,10 +1,10 @@
-# Personal Hub — Agent Guide
+# My Hub — Agent Guide
 
-Personal Hub is a private, GitHub-backed knowledge and instruction repository, exposed to AI agents through an OAuth-protected MCP server. Its purpose is to provide reusable **remote** context that can be retrieved and applied in different agent clients (VS Code, ChatGPT, and others). It is not a workspace-local codebase, a project scaffolder, or a collection of local-only instruction files.
+My Hub is a private, GitHub-backed knowledge and instruction repository, exposed to AI agents through an OAuth-protected MCP server. Its purpose is to provide reusable **remote** context that can be retrieved and applied in different agent clients (VS Code, ChatGPT, and others). It is not a workspace-local codebase, a project scaffolder, or a collection of local-only instruction files.
 
 ## Guiding principles
 
-1. **Personal Hub is the source of truth.** Use its MCP tools to discover, read, create, and update Hub entries. Do not assume a file exists in the agent's current workspace.
+1. **My Hub is the source of truth.** Use its MCP tools to discover, read, create, and update Hub entries. Do not assume a file exists in the agent's current workspace.
 2. **Each entry must be independently usable.** A mode must contain its complete behavioral instructions in its own `modes/<slug>.md`. A skill must contain its complete executable agent guidance in `skills/<slug>/SKILL.md` (unless a future server feature explicitly resolves dependencies). Do not put required instructions in a shared file like `modes/_rules.md` and leave other modes dependent on it.
 3. **Discovery before guessing.** For vague names, list the appropriate category and choose the matching slug. Read the complete entry before applying it.
 4. **Retrieval is not activation.** `get_skill` and `get_mode` return instructions for an agent to interpret and follow in the current task. They do not execute code, install files, or automatically activate a persistent mode.
@@ -62,7 +62,7 @@ Do not make this mode depend on a separate `_rules.md` file that the server does
 
 ## Names
 
-**Personal Hub** is the current deployed server and GitHub repository name. **My Hub** (`my-hub`) is a proposed new name. Until a migration is completed, keep the deployed endpoint and repository paths unchanged.
+**My Hub** is the new project name. The actual GitHub repository is still `leandroferlin5/personal-hub` until renamed in GitHub Settings. The existing Cloudflare Worker URL stays unchanged during this migration.
 
 ## Limitations
 
