@@ -1,5 +1,5 @@
-# Script dummy
+# Dummy Script
 
 status: ok
 
-Contrato de teste (sem execução real): `health_check()` retorna `SCRIPT_OK`.
+Test contract (not actually executed): `health_check()` returns `SCRIPT_OK`.
