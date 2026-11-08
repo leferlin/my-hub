@@ -1,3 +1,3 @@
 # Scripts
 
-Algoritmos e utilitários executáveis. Documente requisitos, entrada, saída e como testar cada script.
+Executable algorithms and utilities. Document requirements, inputs, outputs, and test instructions for every script.
