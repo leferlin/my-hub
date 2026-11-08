@@ -1,5 +1,5 @@
-# Nota dummy
+# Dummy Note
 
 status: ok
 
-Nota fictícia para verificar leitura de `notes/dummy.md`.
+Fictional note for testing retrieval of `notes/dummy.md`.
