@@ -1,4 +1,12 @@
 [
-  {"name":"hello-world","description":"Skill fictícia para validar a integração entre clientes de IA e o servidor MCP.","content":"---\nname: hello-world\ndescription: Skill fictícia para validar a integração entre clientes de IA e o servidor MCP.\n---\n\n# Hello world\n\nEsta skill existe somente para validar a descoberta, listagem e leitura pelo MCP.\n"},
-  {"name":"revisar-texto","description":"Rotina genérica para revisar clareza, ortografia e concisão de textos.","content":"---\nname: revisar-texto\ndescription: Rotina genérica para revisar clareza, ortografia e concisão de textos.\n---\n\n# Revisar texto\n\nPreserve os fatos e melhore a clareza.\n"}
+  {
+    "name": "hello-world",
+    "description": "Example skill for validating MCP integration, discovery, and retrieval.",
+    "content": "---\nname: hello-world\ndescription: Example skill for validating MCP integration, discovery, and retrieval.\n---\n\n# Hello World\n\nThis sample skill verifies that an AI client can discover and read content from Personal Hub.\n\n## Procedure\n1. Identify which client requested the skill.\n2. Reply: \"Hello! The demo catalog is available.\"\n\nDo not access private data or perform external actions.\n"
+  },
+  {
+    "name": "revisar-texto",
+    "description": "General-purpose text review for clarity, grammar, and concision.",
+    "content": "---\nname: revisar-texto\ndescription: General-purpose text review for clarity, grammar, and concision.\n---\n\n# Review Text\n\n## Procedure\n1. Preserve the original facts, intent, and tone.\n2. Correct spelling, grammar, and punctuation.\n3. Improve clarity and concision without introducing new claims.\n4. Provide the revised text and, when helpful, a brief summary of changes.\n\nDo not disclose confidential information to external tools.\n"
+  }
 ]
