@@ -87,3 +87,39 @@ This version uses standard **browser-based OAuth authorization**. It does **not*
 - Do not enable write access with real personal content before validation.
 - The existing static `/mcp-admin` endpoint remains separate for now. Retire it after secure OAuth migration.
 - Review consent, scope enforcement, cookie security, and token refresh behavior before wider deployment.
+
+## Optional: approve a desktop OAuth request from your phone (pilot)
+
+The code in `src/phone-approval.ts` implements **browser-mediated cross-device approval** for normal VS Code OAuth + PKCE, without requiring VS Code to support RFC 8628 device grants.
+
+**Status:** committed but disabled by default. The code has not yet passed build verification or a live phone-to-desktop login test. Do not enable until the current OAuth connection and Worker deployment have been checked.
+
+When eventually enabled, set `ENABLE_PHONE_APPROVAL = "true"` in Wrangler `vars` (not a secret) and deploy. The `ENABLE_OAUTH` flag must also remain enabled.
+
+Expected flow:
+
+1. On the laptop, add/start the existing `/mcp-secure` connection in VS Code. Keep its initial Personal Hub consent page open.
+2. Instead of the normal **Approve** button, use the **Approve from your personal phone** option. The page displays an 80-bit random pairing code, grouped for readability, valid for 10 minutes.
+3. Open `https://personal-hub.leandroferlin5.workers.dev/phone` on your phone. Type the pairing code.
+4. Review the requesting client, callback destination, and scopes on the phone. Choose **Authenticate with GitHub and approve**, using the allowlisted personal GitHub account.
+5. On successful GitHub callback, the phone displays an approval confirmation. GitHub's identity token is discarded.
+6. On the original laptop consent page, select **I approved on my phone — finish on this computer**. The Worker validates the approved pairing code AND the original laptop's consent cookie before issuing the usual OAuth authorization code to VS Code, which redeems it with PKCE.
+
+Technical properties:
+- The laptop still uses the normal OAuth authorization code/PKCE flow; VS Code requires no plugin or device-grant support.
+- No GitHub password, GitHub token, Personal Hub token, or authorization code is transferred between phone and laptop.
+- Pairing codes are high entropy and stored with a short TTL in `OAUTH_KV`; the GitHub callback uses its own one-time `state` and browser-bound cookie.
+- Only the configured numeric `ALLOWED_GITHUB_USER_ID` can authorize; the laptop must also possess its original browser-bound consent cookie.
+- Phone approval grants exactly the scopes shown on the pairing page. It does not expand the client's requested permissions.
+- This implementation intentionally keeps consent before the identity-provider redirect, following Cloudflare's shared-upstream OAuth guidance.
+- A successful pair does not automatically finish the laptop flow: the user must click the completion button on the original laptop page.
+- This is **not** a standard RFC 8628 Device Authorization Grant and does not work if the company also blocks Personal Hub or forbids external MCP connections.
+
+Security caveats / verification plan:
+- Validate `npm run check` and `npm run deploy` before enabling the pilot.
+- Confirm ordinary ChatGPT OAuth still works when the pilot is disabled.
+- Confirm pairing expiration and invalid/guessed codes fail; verify a different GitHub account cannot approve.
+- Confirm the phone cannot finish OAuth by itself; the desktop consent cookie and PKCE must be required.
+- Confirm the callback only completes when the correct phone browser cookie and `state` match.
+- Check Cloudflare Worker logs for OAuth failures without logging sensitive token values.
+- Confirm your organization's policies permit this access method. Never use it to evade an explicit company prohibition on personal external services.
