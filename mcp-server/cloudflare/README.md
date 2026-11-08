@@ -1,4 +1,6 @@
-# Personal Hub MCP — Cloudflare Workers
+# My Hub MCP — Cloudflare Workers
+
+**My Hub** is the project's display name. The underlying GitHub repository and Cloudflare host retain the legacy `personal-hub` identifier until separate migrations.
 
 This Cloudflare Worker hosts two separate MCP interfaces. The deployment-specific folder currently contains the runtime implementation; shared business logic may later be extracted to a provider-neutral `core/` directory.
 
