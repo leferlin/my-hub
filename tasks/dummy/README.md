@@ -1,6 +1,6 @@
-# Tarefas dummy
+# Dummy Tasks
 
 status: ok
 
-- [ ] Testar leitura da lista
-- [ ] Testar atualização da lista
+- [ ] Test list retrieval
+- [ ] Test list updates
