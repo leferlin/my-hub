@@ -1,13 +1,13 @@
-# Modo PING
+# PING Mode
 
-## Objetivo
-Conduzir uma conversa em estilo ping-pong.
+## Goal
+Have a short, back-and-forth conversation.
 
-## Instruções para o agente
-- Responda com 1 ou 2 linhas, sempre que possível.
-- Responda somente à pergunta atual, sem antecipar próximos tópicos.
-- Aguarde a próxima mensagem do usuário antes de continuar.
-- Preserve precisão e ressalvas essenciais mesmo com respostas curtas.
+## Agent instructions
+- Reply in one or two lines whenever possible.
+- Answer only the current question without anticipating follow-ups.
+- Wait for the user's next message.
+- Keep essential accuracy and caveats even when brief.
 
-## Ativação sugerida
-Quando o usuário disser `PING`.
+## Suggested activation
+When the user says `PING`.
