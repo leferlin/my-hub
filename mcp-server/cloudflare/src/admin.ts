@@ -59,7 +59,11 @@ async function loadEntry(env: Secrets, kind: Kind, slug: string) {
   if (data.type !== 'file' || typeof data.sha !== 'string') throw new Error('Invalid file');
   return { path: gitPath(kind, slug), sha: data.sha, html_url: data.html_url };
 }
-function createServer(env: Secrets) {
+export function createGitHubMcpServer(env: Secrets, scopes: readonly string[] = ['hub:read', 'hub:write', 'hub:delete']) {
+  const canRead = scopes.includes('hub:read');
+  const canWrite = scopes.includes('hub:write');
+  const canDelete = scopes.includes('hub:delete');
+  if (!canRead) throw new Error('Missing hub:read scope');
   const server = new McpServer({ name: 'personal-hub-admin', version: '0.3.0' });
   server.registerTool('get_entry', {
     description: 'Read Markdown content and SHA for a skill, note, or mode from the private GitHub repository.',
@@ -96,7 +100,7 @@ function createServer(env: Secrets) {
   });
   for (const kind of ['skill', 'note', 'mode'] as const) {
     const pathOf = (slug: string) => gitPath(kind, slug);
-    server.registerTool(`create_${kind}`, {
+    if (canWrite) server.registerTool(`create_${kind}`, {
       description: `Create ${kind} as a Markdown file in the private GitHub repository. Do not overwrite existing files.`,
       inputSchema: z.object({ slug: slugSchema, content: bodySchema })
     }, async ({ slug, content }) => {
@@ -108,7 +112,7 @@ function createServer(env: Secrets) {
         return result({ action: 'created', kind, path, commit: created.commit?.sha });
       } catch (e) { return failed(e); }
     });
-    server.registerTool(`update_${kind}`, {
+    if (canWrite) server.registerTool(`update_${kind}`, {
       description: `Update ${kind} only if expected_sha matches the current version; preserve Git history.`,
       inputSchema: z.object({ slug: slugSchema, content: bodySchema, expected_sha: shaSchema })
     }, async ({ slug, content, expected_sha }) => {
@@ -120,7 +124,7 @@ function createServer(env: Secrets) {
         return result({ action: 'updated', kind, path, commit: updated.commit?.sha });
       } catch (e) { return failed(e); }
     });
-    server.registerTool(`delete_${kind}`, {
+    if (canDelete) server.registerTool(`delete_${kind}`, {
       description: `Delete ${kind} only with the current SHA to prevent accidentally deleting a newer version.`,
       inputSchema: z.object({ slug: slugSchema, expected_sha: shaSchema })
     }, async ({ slug, expected_sha }) => {
@@ -147,5 +151,5 @@ export async function serveAdminMcp(request: Request, env: Secrets): Promise<Res
     });
   }
   // Instantiate the admin server only after authentication; no admin tools are public.
-  return createMcpHandler(() => createServer(env)).fetch(request);
+  return createMcpHandler(() => createGitHubMcpServer(env)).fetch(request);
 }
