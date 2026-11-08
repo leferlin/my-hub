@@ -1,18 +1,19 @@
-# OAuth setup — Personal Hub
+# Personal Hub — OAuth 2.1 setup
 
-## Objective
+## Status
 
-Allow ChatGPT, Claude, and VS Code to authenticate to the MCP server without receiving GitHub repository credentials. The Worker must validate each user's identity and scopes before reading or writing files via the GitHub API.
+The OAuth implementation is committed in `src/oauth.ts` and routed from `src/index.ts`. It is **disabled by default** and has not yet passed a live OAuth login or write test. The original `/mcp` demo endpoint remains unchanged.
 
-## Planned routes (not implemented yet)
+- OAuth-protected MCP: `https://personal-hub.leandroferlin5.workers.dev/mcp-secure`
+- Consent URL: `https://personal-hub.leandroferlin5.workers.dev/authorize`
+- Identity callback: `https://personal-hub.leandroferlin5.workers.dev/callback`
+- Token endpoint (owned by library): `/oauth/token`
+- Client registration (owned by library): `/oauth/register`
+- OAuth discovery: `/.well-known/...` (owned by library)
 
-- Authenticated MCP: `https://personal-hub.leandroferlin5.workers.dev/mcp-secure`
-- OAuth authorization: `https://personal-hub.leandroferlin5.workers.dev/authorize`
-- GitHub identity callback: `https://personal-hub.leandroferlin5.workers.dev/callback`
+The Worker is its **own OAuth authorization server** for MCP clients; GitHub is only its initial identity provider. The user is mapped to internal `user-001` after validating a stable GitHub numeric ID. The GitHub identity token is discarded after login.
 
-Keep the existing public `/mcp` demo endpoint unchanged until OAuth has been fully implemented and tested.
-
-## GitHub OAuth App setup
+## 1. Create a GitHub OAuth App (for identity only)
 
 Open https://github.com/settings/developers → OAuth Apps → New OAuth App.
 
@@ -20,20 +21,69 @@ Open https://github.com/settings/developers → OAuth Apps → New OAuth App.
 - Homepage URL: `https://personal-hub.leandroferlin5.workers.dev`
 - Authorization callback URL: `https://personal-hub.leandroferlin5.workers.dev/callback`
 
-The callback belongs to the Worker, not directly to VS Code or ChatGPT.
+The OAuth App should request no repository scopes. It is only used to verify the owner identity. Record the Client ID and generate a Client Secret. **Never put secrets in Git, a message, or a screenshot.**
 
-GitHub provides a Client ID (not secret) and a Client Secret (secret). Store the secret only through Cloudflare Workers → Settings → Variables and Secrets. Never share OAuth secrets, access tokens, or authorization codes in chat.
+## 2. Configure Cloudflare KV
 
-## Remaining implementation tasks
+Cloudflare Dashboard → Storage & databases → KV → Create namespace: `PERSONAL_HUB_OAUTH`.
 
-1. Integrate `@cloudflare/workers-oauth-provider` with appropriate persistent storage, OAuth discovery, PKCE, and a consent page.
-2. Validate the GitHub user identity against an explicit allowlist. Do not trust display names or agent instructions.
-3. Define `hub:read`, `hub:write`, and `hub:delete` scopes; grant write/delete only with explicit authorization.
-4. Separate GitHub login identity from repository access credentials (GitHub App installation token or a fine-grained token restricted to this repository).
-5. Implement dynamic GitHub reads and verify end-to-end CRUD for skills, notes, and modes.
-6. Audit sensitive logs and test CSRF protection, cookies, redirect URIs, token issuance, expiry, and client consent.
-7. Retire the static admin endpoint after the replacement has been validated.
+Copy the namespace ID. Edit `mcp-server/cloudflare/wrangler.jsonc` and add:
 
-## Security notes
+```jsonc
+"kv_namespaces": [
+  { "binding": "OAUTH_KV", "id": "YOUR_CLOUDFLARE_KV_NAMESPACE_ID" }
+]
+```
 
-GitHub login establishes identity; it does **not** by itself authorize repository writes. `/mcp-admin` remains separate and requires private credentials. Never configure public access to private content. Existing dummy files are test fixtures only.
+Use your actual namespace ID. The OAuth library needs the Worker binding named **exactly** `OAUTH_KV`. Do not enable OAuth before this binding is deployed.
+
+## 3. Configure Cloudflare environment variables and secrets
+
+Cloudflare → Workers & Pages → personal-hub → Settings → Variables and Secrets.
+
+Set these **secrets**:
+
+- `GITHUB_CLIENT_ID` — GitHub OAuth App Client ID.
+- `GITHUB_CLIENT_SECRET` — GitHub OAuth App Client Secret.
+- `GITHUB_TOKEN` — separate *fine-grained* token limited to `leandroferlin5/personal-hub`, permission **Contents: Read and write**. This is the temporary MVP repository credential; later replace with a GitHub App installation token.
+
+Set this **variable**:
+
+- `ALLOWED_GITHUB_USER_ID` — the stable numeric GitHub user ID of the repository owner. You can get it from GitHub's `/user` API while authenticated.
+- `ENABLE_OAUTH` — leave unset or `false` until prerequisites and build are verified.
+
+Never reuse the GitHub login token as the repository token. Never expose `GITHUB_TOKEN` through MCP responses.
+
+## 4. Verify before enabling
+
+1. Make sure the Cloudflare deployment compiles successfully after adding `@cloudflare/workers-oauth-provider`.
+2. Bind `OAUTH_KV` and deploy.
+3. Set credentials and allowlisted numeric GitHub user ID.
+4. Change `ENABLE_OAUTH` to `true` and deploy.
+5. Confirm `GET /health` reports `oauthEnabled: true`.
+6. An unauthenticated MCP request to `/mcp-secure` should return HTTP 401 and OAuth discovery.
+7. Connect an MCP client; verify the consent screen shows the correct client, redirect host, and requested scopes.
+8. Authenticate with GitHub and verify a non-allowlisted user is rejected.
+9. Obtain `hub:read`, then test `list_entries` and `get_entry` using the MCP client.
+10. Grant `hub:write`, run `create_note` with a dummy entry, confirm the GitHub commit, then test update/delete scopes separately.
+11. Confirm no private repository content appears through the public `/mcp` endpoint.
+
+## Scope policy
+
+- `hub:read`: list/read entries.
+- `hub:write`: create/update entries (also requires `hub:read`).
+- `hub:delete`: delete entries (also requires `hub:read`).
+- `offline_access`: request refresh-token support when the client supports it.
+
+OAuth consent is per client and should be reviewed carefully. The SDK handles token issuance, discovery, client registration, and refresh token rotation, while the app handles GitHub sign-in and consent.
+
+## Important limitation for a corporate laptop
+
+This version uses standard **browser-based OAuth authorization**. It does **not** implement the OAuth Device Authorization Grant or phone approval. If the laptop cannot log in to GitHub, this flow alone will not solve that problem. We can add device authorization or passkey login later, subject to MCP client support and corporate security policy.
+
+## Security / operations
+
+- The new OAuth code is an untested MVP, not a production security guarantee.
+- Do not enable write access with real personal content before validation.
+- The existing static `/mcp-admin` endpoint remains separate for now. Retire it after secure OAuth migration.
+- Review consent, scope enforcement, cookie security, and token refresh behavior before wider deployment.
