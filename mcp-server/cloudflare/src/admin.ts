@@ -11,7 +11,7 @@ const prefix: Record<'skill' | 'note' | 'mode', (slug: string) => string> = {
 };
 type Kind = keyof typeof prefix;
 type Entry = { content: string; sha?: string };
-const slugSchema = z.string().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use letras minúsculas, números e hífens');
+const slugSchema = z.string().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens');
 const kindSchema = z.enum(['skill', 'note', 'mode']);
 const bodySchema = z.string().min(1).max(64000);
 const shaSchema = z.string().regex(/^[a-f0-9]{40}$/);
@@ -28,7 +28,7 @@ function base64(text: string) {
   return btoa(binary);
 }
 async function github(env: Secrets, method: string, path: string, payload?: unknown) {
-  if (!env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN não configurado');
+  if (!env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is not configured');
   const url = `https://api.github.com/repos/${owner}/${repository}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
   const response = await fetch(url, {
     method,
@@ -44,7 +44,7 @@ async function github(env: Secrets, method: string, path: string, payload?: unkn
   const data: any = await response.json().catch(() => ({}));
   if (!response.ok) {
     const code = response.status;
-    throw new Error(`GitHub HTTP ${code}: ${typeof data.message === 'string' ? data.message.slice(0, 240) : 'requisição recusada'}`);
+    throw new Error(`GitHub HTTP ${code}: ${typeof data.message === 'string' ? data.message.slice(0, 240) : 'request rejected'}`);
   }
   return data;
 }
@@ -52,23 +52,23 @@ function result(value: unknown) {
   return { content: [{ type: 'text' as const, text: JSON.stringify(value) }] };
 }
 function failed(error: unknown) {
-  return { isError: true, content: [{ type: 'text' as const, text: error instanceof Error ? error.message : 'Falha desconhecida' }] };
+  return { isError: true, content: [{ type: 'text' as const, text: error instanceof Error ? error.message : 'Unknown error' }] };
 }
 async function loadEntry(env: Secrets, kind: Kind, slug: string) {
   const data = await github(env, 'GET', gitPath(kind, slug));
-  if (data.type !== 'file' || typeof data.sha !== 'string') throw new Error('Arquivo inválido');
+  if (data.type !== 'file' || typeof data.sha !== 'string') throw new Error('Invalid file');
   return { path: gitPath(kind, slug), sha: data.sha, html_url: data.html_url };
 }
 function createServer(env: Secrets) {
   const server = new McpServer({ name: 'personal-hub-admin', version: '0.3.0' });
   server.registerTool('get_entry', {
-    description: 'Lê o conteúdo Markdown e o SHA de uma skill, note ou mode do GitHub privado.',
+    description: 'Read Markdown content and SHA for a skill, note, or mode from the private GitHub repository.',
     inputSchema: z.object({ kind: kindSchema, slug: slugSchema })
   }, async ({ kind, slug }) => {
     try {
       const data = await github(env, 'GET', gitPath(kind, slug));
       if (data.type !== 'file' || data.encoding !== 'base64' || typeof data.content !== 'string') {
-        throw new Error('Resposta de arquivo inválida');
+        throw new Error('Invalid file response');
       }
       const binary = atob(data.content.replace(/\s/g, ''));
       const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
@@ -76,20 +76,20 @@ function createServer(env: Secrets) {
     } catch (e) { return failed(e); }
   });
   server.registerTool('list_entries', {
-    description: 'Lista nomes de skills, notes ou modes no repositório privado.',
+    description: 'List skills, notes, or modes in the private GitHub repository.',
     inputSchema: z.object({ kind: kindSchema })
   }, async ({ kind }) => {
     try {
       const folder = kind === 'skill' ? 'skills' : kind === 'note' ? 'notes' : 'modes';
       const data = await github(env, 'GET', folder);
-      if (!Array.isArray(data)) throw new Error('Pasta indisponível');
+      if (!Array.isArray(data)) throw new Error('Folder unavailable');
       return result(data
         .filter((entry: any) => kind === 'skill' ? entry.type === 'dir' : entry.type === 'file' && entry.name.endsWith('.md'))
         .map((entry: any) => ({ name: entry.name, path: entry.path })));
     } catch (e) { return failed(e); }
   });
   server.registerTool('get_entry_metadata', {
-    description: 'Obtém o SHA atual de uma skill, note ou mode antes de atualizar ou excluir.',
+    description: 'Get the current SHA for a skill, note, or mode before updating or deleting it.',
     inputSchema: z.object({ kind: kindSchema, slug: slugSchema })
   }, async ({ kind, slug }) => {
     try { return result(await loadEntry(env, kind, slug)); } catch (e) { return failed(e); }
@@ -97,7 +97,7 @@ function createServer(env: Secrets) {
   for (const kind of ['skill', 'note', 'mode'] as const) {
     const pathOf = (slug: string) => gitPath(kind, slug);
     server.registerTool(`create_${kind}`, {
-      description: `Cria ${kind} como arquivo Markdown no GitHub privado. Não sobrescreve arquivos existentes.`,
+      description: `Create ${kind} as a Markdown file in the private GitHub repository. Do not overwrite existing files.`,
       inputSchema: z.object({ slug: slugSchema, content: bodySchema })
     }, async ({ slug, content }) => {
       try {
@@ -109,7 +109,7 @@ function createServer(env: Secrets) {
       } catch (e) { return failed(e); }
     });
     server.registerTool(`update_${kind}`, {
-      description: `Atualiza ${kind} somente se expected_sha corresponder à versão atual; preserva histórico Git.`,
+      description: `Update ${kind} only if expected_sha matches the current version; preserve Git history.`,
       inputSchema: z.object({ slug: slugSchema, content: bodySchema, expected_sha: shaSchema })
     }, async ({ slug, content, expected_sha }) => {
       try {
@@ -121,7 +121,7 @@ function createServer(env: Secrets) {
       } catch (e) { return failed(e); }
     });
     server.registerTool(`delete_${kind}`, {
-      description: `Exclui ${kind} explicitamente, exigindo SHA atual para evitar exclusão acidental de outra versão.`,
+      description: `Delete ${kind} only with the current SHA to prevent accidentally deleting a newer version.`,
       inputSchema: z.object({ slug: slugSchema, expected_sha: shaSchema })
     }, async ({ slug, expected_sha }) => {
       try {
@@ -146,6 +146,6 @@ export async function serveAdminMcp(request: Request, env: Secrets): Promise<Res
       headers: { 'WWW-Authenticate': 'Bearer realm="personal-hub-admin"', 'Cache-Control': 'no-store' }
     });
   }
-  // O servidor só é instanciado após autenticação; nenhuma ferramenta admin é pública.
+  // Instantiate the admin server only after authentication; no admin tools are public.
   return createMcpHandler(() => createServer(env)).fetch(request);
 }
