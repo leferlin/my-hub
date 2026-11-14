@@ -17,9 +17,11 @@
 
 Git tracks files, not empty directories, so each folder contains Markdown or other files.
 
-## Naming and migration
+## Repository and deployment
 
-The project's new display name is **My Hub**. The GitHub repository is temporarily still `leandroferlin5/personal-hub`, and the Cloudflare Worker URL remains `personal-hub.leandroferlin5.workers.dev` until a separate endpoint migration. Keep these technical identifiers unchanged until the repository rename and integration verification are complete.
+The source repository is [`leferlin/my-hub`](https://github.com/leferlin/my-hub). The existing Cloudflare Worker name and OAuth endpoints intentionally keep their original `personal-hub` addresses for client compatibility. `GITHUB_REPO_OWNER` and `GITHUB_REPO_NAME` configure the live GitHub source.
+
+**After switching repositories:** authorize Cloudflare's `GITHUB_TOKEN` for `leferlin/my-hub` (Contents: read/write), point Cloudflare's Git integration to this repository or deploy it manually, then verify authenticated reads and writes. GitHub App access granted to ChatGPT does not automatically authorize Cloudflare.
 
 ## MCP status
 
@@ -33,11 +35,11 @@ The Cloudflare implementation currently exposes two separate endpoints:
 
 The public `/mcp` endpoint does **not** load the live GitHub repository. Its bundled catalog is refreshed only during deployment. New GitHub files do not automatically appear there.
 
-The administrative tools use the GitHub API at runtime and produce Git commits when writing files. They require both `MCP_ADMIN_TOKEN` and `GITHUB_TOKEN` configured as Cloudflare secrets. OAuth code is now staged behind the `ENABLE_OAUTH` flag; Cloudflare KV, GitHub sign-in credentials, deployment, and end-to-end validation are still pending. Do not treat the admin endpoint as ready for public use.
+The administrative tools use the GitHub API at runtime and produce Git commits when writing files. They require both `MCP_ADMIN_TOKEN` and `GITHUB_TOKEN` configured as Cloudflare secrets. OAuth is implemented behind the `ENABLE_OAUTH` flag and uses Cloudflare KV and GitHub sign-in. Ensure Worker secrets and deployment bindings remain configured after repository migration. Do not treat the admin endpoint as ready for public use.
 
 **Security:** The public demo endpoint has no authentication. Never expose private notes, plans, credentials, or sensitive skills through the demo catalog. Keep secrets out of Git, screenshots, logs, and conversations.
 
-The OAuth-protected endpoint will be `/mcp-secure` once enabled. It uses GitHub sign-in for owner identity and separate Cloudflare secrets for repository access. This release does not yet implement cross-device phone approval.
+The OAuth-protected endpoint is `/mcp-secure` when enabled. GitHub sign-in provides user identity; the `GITHUB_TOKEN` secret provides separate repository access. Cross-device phone approval is implemented behind `ENABLE_PHONE_APPROVAL`.
 
 See [MCP documentation](mcp-server/cloudflare/README.md) and [OAuth setup instructions](mcp-server/cloudflare/OAUTH_SETUP.md).
 
