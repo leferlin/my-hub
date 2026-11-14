@@ -3,7 +3,7 @@ import { createMcpHandler } from '@modelcontextprotocol/server';
 import { createGitHubMcpServer, type Secrets } from './admin';
 import { createPair, renderPairOption, finishPair, phoneLanding, startPhoneLogin, completePhoneLogin } from './phone-approval';
 
-const ORIGIN = 'https://personal-hub.leandroferlin5.workers.dev';
+const ORIGIN = 'https://my-hub-mcp.leandroferlin5.workers.dev';
 const RESOURCE = `${ORIGIN}/mcp-secure`;
 const CALLBACK = `${ORIGIN}/callback`;
 const SCOPES = ['hub:read', 'hub:write', 'hub:delete', 'offline_access'];
