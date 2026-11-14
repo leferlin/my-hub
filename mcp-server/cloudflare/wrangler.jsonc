@@ -15,6 +15,8 @@
   ],
   "vars": {
     "ALLOWED_GITHUB_USER_ID": "352393975",
+    "GITHUB_REPO_OWNER": "leferlin",
+    "GITHUB_REPO_NAME": "my-hub",
     "ENABLE_OAUTH": "true",
     "ENABLE_PHONE_APPROVAL": "true"
   }
