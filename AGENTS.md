@@ -40,6 +40,7 @@ The authenticated MCP exposes a compact generic interface; use the `kind` parame
 - `update_entry({kind, slug, content, expected_sha})` requires `hub:write`; first retrieve the current SHA.
 - `delete_entry({kind, slug, expected_sha})` requires `hub:delete` and explicit user confirmation.
 - `get_hub_guide()` reads this guide.
+- `install_skills()` lists the current remote skills and provides a brief installation guide for the calling agent's own harness/device. The tool only gives instructions; the client must retrieve each full skill using `get_entry({kind: "skill", slug})` and perform any local installation itself, with user approval as needed.
 
 Write and delete tools are hidden when their corresponding OAuth scopes are absent. The public /mcp demo is a separate, static build-time catalog.
 
