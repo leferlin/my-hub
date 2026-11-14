@@ -105,7 +105,7 @@ export async function createPair(env: OAuthEnv, details: {
 
 export function renderPairOption(displayedCode: string, handle: string, requestedScopes: string[]) {
   return '<hr><h2>Approve from your personal phone</h2>' +
-    '<p>If GitHub is blocked on this computer, open <strong>https://personal-hub.leandroferlin5.workers.dev/phone</strong> on your phone and enter:</p>' +
+    '<p>If GitHub is blocked on this computer, open <strong>https://my-hub-mcp.leandroferlin5.workers.dev/phone</strong> on your phone and enter:</p>' +
     '<p style="font-size:1.45rem;letter-spacing:.06em"><strong>' + htmlEscape(displayedCode) + '</strong></p>' +
     '<p>Authenticate with GitHub on the phone and approve the request. Keep this computer page open.</p>' +
     '<form method="POST">' +
