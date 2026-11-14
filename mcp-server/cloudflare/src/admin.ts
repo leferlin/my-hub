@@ -1,9 +1,7 @@
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
 import { z } from 'zod';
 
-export type Secrets = { GITHUB_TOKEN?: string; MCP_ADMIN_TOKEN?: string };
-const owner = 'leandroferlin5';
-const repository = 'personal-hub';
+export type Secrets = { GITHUB_TOKEN?: string; MCP_ADMIN_TOKEN?: string; GITHUB_REPO_OWNER?: string; GITHUB_REPO_NAME?: string };
 const kinds = ['skill', 'note', 'mode', 'plan', 'task', 'procedure', 'knowledge', 'workflow', 'script'] as const;
 type Kind = typeof kinds[number];
 const folders: Record<Kind, string> = {
@@ -45,7 +43,9 @@ function base64(text: string) {
 }
 async function github(env: Secrets, method: string, path: string, payload?: unknown) {
   if (!env.GITHUB_TOKEN) throw new Error('GITHUB_TOKEN is not configured');
-  const url = `https://api.github.com/repos/${owner}/${repository}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
+  const owner = env.GITHUB_REPO_OWNER || 'leferlin';
+  const repository = env.GITHUB_REPO_NAME || 'my-hub';
+  const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repository)}/contents/${path.split('/').map(encodeURIComponent).join('/')}`;
   const response = await fetch(url, {
     method,
     headers: {
