@@ -48,7 +48,7 @@ export function registerHubTools(server: McpServer, storage: EntryStorage, scope
         'Do not write installation files into the remote My Hub repository; that repository is the source.',
         'If your environment cannot install skills, explain the appropriate manual steps. Never claim installation succeeded without verifying it.',
         'get_entry returns SKILL.md only. If a skill refers to supporting assets/files, fetch them separately before claiming a complete installation.'
-      ].join('\\n');
+      ].join('\n');
       return response({ skills: catalog, count: catalog.length, installation_guide: guide, installed: false });
     } catch (e) { return errorResponse(e); }
   });
