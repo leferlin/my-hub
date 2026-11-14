@@ -33,6 +33,26 @@ export function registerHubTools(server: McpServer, storage: EntryStorage, scope
     } catch (e) { return errorResponse(e); }
   });
 
+  server.registerTool('install_skills', {
+    description: 'Discover every My Hub skill and get a short, harness-independent guide for installing the selected skills into this agent environment. Read-only: does not install anything.',
+    inputSchema: z.object({})
+  }, async () => {
+    try {
+      const skills = await storage.list('skill');
+      const catalog = skills.map(({ slug, path }) => ({ slug, path }));
+      const guide = [
+        'Choose which skills to install from the list below.',
+        'For each chosen slug, call get_entry({ kind: "skill", slug }) to read its complete SKILL.md.',
+        'Use your agent/harness supported skill installation mechanism and location (local, user-level or project-level); do not assume a universal path.',
+        'With user approval where needed, preserve the SKILL.md content and frontmatter as <slug>/SKILL.md. Do not overwrite existing installations without reviewing them.',
+        'Do not write installation files into the remote My Hub repository; that repository is the source.',
+        'If your environment cannot install skills, explain the appropriate manual steps. Never claim installation succeeded without verifying it.',
+        'get_entry returns SKILL.md only. If a skill refers to supporting assets/files, fetch them separately before claiming a complete installation.'
+      ].join('\\n');
+      return response({ skills: catalog, count: catalog.length, installation_guide: guide, installed: false });
+    } catch (e) { return errorResponse(e); }
+  });
+
   server.registerTool('list_entries', {
     description: 'List entries in one category. Valid categories: skill, note, mode, plan, task, procedure, knowledge, workflow, script.',
     inputSchema: z.object({ kind: kindSchema })
