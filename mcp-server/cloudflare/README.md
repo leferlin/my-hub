@@ -1,67 +1,43 @@
-# My Hub MCP — Cloudflare Workers
+# My Hub MCP — Cloudflare deployment
 
-**My Hub** is the project's display name. The underlying GitHub repository and Cloudflare host retain the legacy `personal-hub` identifier until separate migrations.
+The shared MCP functionality is extracted from the Cloudflare entrypoint:
 
-This Cloudflare Worker hosts two separate MCP interfaces. The deployment-specific folder currently contains the runtime implementation; shared business logic may later be extracted to a provider-neutral `core/` directory.
+- `src/core/types.ts`: nine content kinds, paths, and `EntryStorage` interface.
+- `src/core/tools.ts`: generic MCP tool registrations, independent of storage and hosting.
+- `src/core/demo-tools.ts`: public demo catalog tools.
+- `src/storage/github.ts`: repository adapter using GitHub Contents API.
+- `src/admin.ts`: MCP composition and legacy bearer auth.
+- `src/oauth.ts`, `src/phone-approval.ts`, `src/index.ts`: Cloudflare-specific OAuth, phone approval, and HTTP routing.
 
 ## Endpoints
 
-- `GET /health`: public server status and version.
-- `POST /mcp`: public, read-only demo MCP with a build-time skill catalog. Tools: `list_skills`, `search_skills`, `get_skill`.
-- `POST /mcp-admin`: protected GitHub-backed MCP for reading/writing skills, notes, and modes. Requires `Authorization: Bearer <MCP_ADMIN_TOKEN>`.
+- `/health`: public health check.
+- `/mcp`: unauthenticated, static demo tools `list_skills`, `search_skills`, `get_skill`.
+- `/mcp-secure`: authenticated live GitHub-backed tools.
+- `/mcp-admin`: optional legacy bearer-protected endpoint, if `MCP_ADMIN_TOKEN` is installed.
 
-**Do not connect the unauthenticated ChatGPT plugin to `/mcp-admin`.** A proper OAuth flow is still required for ChatGPT and other OAuth-based clients. The current static Bearer header is intended only for explicitly controlled clients that support it.
+## Secure tools
 
-## Administrative tools
+The compact API has six generic tools: `list_entries`, `get_entry`, `search_entries`, `create_entry`, `update_entry`, `delete_entry`. A seventh helper, `get_hub_guide`, returns `AGENTS.md`.
 
-- `list_entries`, `get_entry`, `get_entry_metadata`
-- `create_skill`, `update_skill`, `delete_skill`
-- `create_note`, `update_note`, `delete_note`
-- `create_mode`, `update_mode`, `delete_mode`
+Each entry tool accepts `kind` from skill, note, mode, plan, task, procedure, knowledge, workflow, or script. Search matches **names and paths**, not full text or semantic similarity. Create/update tools are only registered with `hub:write`, and delete only with `hub:delete`. Updating/deleting requires `expected_sha` for optimistic concurrency.
 
-Entry paths:
-- Skills: `skills/{slug}/SKILL.md`
-- Notes: `notes/{slug}.md`
-- Modes: `modes/{slug}.md`
-
-Slugs contain lowercase letters, numbers, and hyphens. Markdown content has a 64,000-character limit. Updates and deletions require `expected_sha` for optimistic concurrency. All writes produce Git commits. There is no bulk-delete tool.
-
-## Private Cloudflare configuration
-
-Under **Workers & Pages → personal-hub → Settings → Variables and Secrets**, configure the following as **secrets**, never plaintext variables:
-
-1. `GITHUB_TOKEN`: a fine-grained GitHub token restricted to `leandroferlin5/personal-hub`, with **Contents: Read and write** only.
-2. `MCP_ADMIN_TOKEN`: an independent, high-entropy random admin secret (ideally at least 32 bytes).
-
-Without these secrets, `/mcp-admin` responds with HTTP 503. Without a valid Bearer token, it returns HTTP 401.
-
-The admin token authenticates the MCP client to the Worker; the GitHub token authenticates the Worker to GitHub. Do not share either token in chat, Git, screenshots, or logs.
-
-**Next security milestone:** replace the static admin-token model with OAuth 2.1, individual user identity, consent, scopes for read/write/delete, and secure session/token handling.
+Clients relying on former kind-specific tools (`get_note`, `list_skills` on the secure endpoint, etc.) need to refresh tool discovery and use generic equivalents. The public demo API remains unchanged.
 
 ## Deployment
 
-Cloudflare Git integration:
-- Root directory: `mcp-server/cloudflare`
-- Build: `npm run build:catalog`
-- Deploy: `npx wrangler deploy`
+Source: `leferlin/my-hub`, branch `deploy/my-hub-mcp` after review. Root: `mcp-server/cloudflare`. Worker: `my-hub-mcp`.
 
-Local setup using Node.js 20+:
-
-```bash
+```sh
 cd mcp-server/cloudflare
 npm install
 npm run build:catalog
 npm run check
-npx wrangler dev
+npm run deploy
 ```
 
-The public skill catalog is bundled at build time. Entries written by the admin MCP do not appear automatically in `/mcp`. A future OAuth-protected endpoint should read private GitHub content dynamically at runtime.
+Set Cloudflare secrets `GITHUB_TOKEN` (PAT for `leferlin/my-hub`, Contents read/write), `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`. Optional `MCP_ADMIN_TOKEN` is for the legacy admin route; never share it with untrusted clients.
 
-## Operational safeguards
+Wrangler variables include `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME`, `ALLOWED_GITHUB_USER_ID`, `ENABLE_OAUTH`, and `ENABLE_PHONE_APPROVAL`. `OAUTH_KV` provides OAuth state. Do not commit secrets.
 
-- Review agent-proposed changes, especially deletions.
-- Keep secrets out of the repository.
-- Rotate credentials and review access regularly.
-- Do not distribute the admin Bearer token to third-party clients.
-- This is an MVP and still requires compilation and end-to-end security testing before production use.
+**Release gate:** typecheck, public health/demo, authenticated list/get, create/update with SHA, and OAuth scope checks. Keep the currently deployed Worker untouched until these pass.

@@ -1,39 +1,13 @@
 import { McpServer, createMcpHandler } from '@modelcontextprotocol/server';
-import { z } from 'zod';
 import catalog from './catalog.json';
+import { registerDemoTools } from './core/demo-tools';
 import { serveAdminMcp, type Secrets } from './admin';
 import { personalHubOAuth } from './oauth';
 
 function createServer() {
   const server = new McpServer({ name: 'my-hub', version: '0.2.0' });
 
-  server.registerTool('list_skills', {
-    description: 'List available skills.',
-    inputSchema: z.object({})
-  }, async () => ({
-    content: [{ type: 'text', text: JSON.stringify(catalog.map(({ name, description }) => ({ name, description })), null, 2) }]
-  }));
-
-  server.registerTool('search_skills', {
-    description: 'Search skills by text.',
-    inputSchema: z.object({ query: z.string().min(1) })
-  }, async ({ query }) => {
-    const q = query.toLowerCase();
-    const matches = catalog.filter(s => `${s.name} ${s.description} ${s.content}`.toLowerCase().includes(q));
-    return {
-      content: [{ type: 'text', text: JSON.stringify(matches.map(({ name, description }) => ({ name, description })), null, 2) }]
-    };
-  });
-
-  server.registerTool('get_skill', {
-    description: 'Retrieve the complete instructions for a skill.',
-    inputSchema: z.object({ name: z.string().min(1) })
-  }, async ({ name }) => {
-    const skill = catalog.find(s => s.name === name);
-    return skill
-      ? { content: [{ type: 'text', text: skill.content }] }
-      : { isError: true, content: [{ type: 'text', text: 'Skill not found' }] };
-  });
+  registerDemoTools(server, catalog);
 
   return server;
 }
